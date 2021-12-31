@@ -1,3 +1,5 @@
+use eframe::egui;
+use eframe::egui::CtxRef;
 use crate::drawable::Drawable;
 
 pub struct MainWindow {
@@ -6,12 +8,16 @@ pub struct MainWindow {
 
 impl Default for MainWindow {
     fn default() -> Self {
-        todo!()
+        MainWindow { }
     }
 }
 
 impl Drawable for MainWindow {
-    fn draw(&self) {
-        todo!()
+    fn draw(&self, ctx: &CtxRef) {
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("HemiTyper");
+        });
+
     }
 }

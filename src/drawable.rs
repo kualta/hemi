@@ -1,3 +1,5 @@
+use eframe::egui::{CtxRef, Ui};
+
 pub trait Drawable {
-    fn draw(&self);
+    fn draw(&self, ctx: &CtxRef);
 }
