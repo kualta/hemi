@@ -3,9 +3,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 mod app;
+pub mod windows;
 mod drawable;
-mod about_window;
-mod main_window;
+mod top_bar;
 
 pub use app::App;
 

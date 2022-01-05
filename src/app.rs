@@ -1,35 +1,46 @@
 use eframe::{egui, epi};
 use eframe::egui::{CentralPanel, Color32, Pos2, Window};
-use crate::about_window::AboutWindow;
 use crate::drawable::Drawable;
-use crate::main_window::MainWindow;
+use crate::windows::main_window::*;
+use crate::windows::about_window::*;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "persistence", serde(default))] // if we add new fields, give them default values when deserializing old state
-pub struct App {
-    active_window: Option<Box<dyn Drawable>>,
-    main_window: MainWindow,
-    about_window: AboutWindow
+pub struct App<'app> {
+    pub(crate) active_window: Option<&'app dyn Drawable<'app>>,
+    pub(crate) main_window: MainWindow<'app>,
+    pub(crate) about_window: AboutWindow<'app>,
+    pub(crate) exit_requested: bool,
 }
 
-impl Default for App {
+impl<'app> Default for App<'app> {
     fn default() -> Self {
         Self {
             active_window: Option::None,
-            main_window: MainWindow::default(),
-            about_window: AboutWindow::default()
+            main_window: MainWindow::new(),
+            about_window: AboutWindow::new(),
+            exit_requested: false,
         }
     }
 }
 
-impl epi::App for App {
+impl<'app> App<'app> {
+    pub(crate) fn set_active_window(&mut self, window: &'app dyn Drawable<'app>) {
+        self.active_window = Some(window);
+    }
+    pub(crate) fn exit(&mut self) {
+        self.exit_requested = true;
+    }
+}
+
+impl<'app> epi::App for App<'app> {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
         let Self { .. } = self;
 
-        match &self.active_window {
+        match &mut self.active_window {
             Some(w) => {
-                w.draw(ctx);
+                w.draw(ctx, self);
             }
             None => {
                 egui::CentralPanel::default().show(ctx, |ui| {
@@ -38,20 +49,7 @@ impl epi::App for App {
             }
         };
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        frame.quit();
-                    }
-                });
-                ui.menu_button("Help", |ui| {
-                    if ui.button("About").clicked() {
-                        self.active_window = Some(Box::new(self.about_window));
-                    }
-                });
-            });
-        });
+        if self.exit_requested { frame.quit() };
 
     }
 
@@ -67,7 +65,10 @@ impl epi::App for App {
         if let Some(storage) = _storage {
             *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
         }
-    }
+
+        // self.main_window = Some(MainWindow::new(&self));
+        // self.active_window = Some(Box::new(&self.main_window));
+}
 
     /// Saves the state before shutdown.
     #[cfg(feature = "persistence")]

@@ -1,20 +1,25 @@
+use std::marker::PhantomData;
 use eframe::egui;
 use eframe::egui::{CtxRef, Ui};
+use crate::App;
 use crate::drawable::Drawable;
 
-#[derive(Copy, Clone)]
-pub struct AboutWindow {
 
+pub struct AboutWindow<'app> {
+    _marker: PhantomData<&'app ()>
 }
 
-impl Default for AboutWindow {
-    fn default() -> Self {
-       Self { }
+impl<'app> AboutWindow<'app> {
+    pub(crate) fn new() -> AboutWindow<'app> {
+        AboutWindow {
+            _marker: Default::default()
+        }
     }
 }
 
-impl Drawable for AboutWindow {
-    fn draw(&self, ctx: &CtxRef) {
+
+impl<'app> Drawable<'app> for AboutWindow<'app> {
+    fn draw(&self, ctx: &CtxRef, app: &mut App) {
 
         egui::CentralPanel::default().show(ctx, |ui| {
 
@@ -33,8 +38,8 @@ impl Drawable for AboutWindow {
     }
 }
 
-impl<'a> Drawable for &'a AboutWindow {
-    fn draw(&self, ctx: &CtxRef) {
+impl<'app> Drawable<'app> for &AboutWindow<'app> {
+    fn draw(&self, ctx: &CtxRef, app: &mut App) {
 
         egui::CentralPanel::default().show(ctx, |ui| {
 
