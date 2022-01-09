@@ -3,10 +3,6 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
 mod app;
-pub mod windows;
-mod drawable;
-mod top_bar;
-
 pub use app::App;
 
 // ----------------------------------------------------------------------------
