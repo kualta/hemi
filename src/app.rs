@@ -1,5 +1,5 @@
 use eframe::{egui, epi};
-use eframe::egui::{CentralPanel, Color32, Pos2, Window};
+use eframe::egui::{CentralPanel, Color32, Pos2, Vec2, Window};
 
 pub struct ApplicationConfig {
     pub side_enabled: (bool, bool),
@@ -39,6 +39,27 @@ impl App {
 impl epi::App for App {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
 
+        match &mut self.config.side_enabled {
+            (false, false) => {},
+            (false, true) => {},
+            (true, false) => {},
+            (true, true) => {},
+        }
+
+        egui::SidePanel::right("my_side_panel")
+            .resizable(false)
+            .min_width(500.0)
+            .show(ctx, |ui| {
+                ui.label("Right Panel!");
+                ui.label("Right Panel!");
+                ui.label("Right Panel!");
+                ui.label("Right Panel!");
+                ui.label("Right Panel!");
+        });
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.label("HI");
+        });
 
 
         if self.exit_requested {
