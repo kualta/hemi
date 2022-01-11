@@ -1,7 +1,7 @@
 use std::alloc::Layout;
 use std::collections::hash_map::IntoKeys;
 use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, CtxRef, Pos2, Stroke, Vec2, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, CtxRef, Pos2, Stroke, Ui, Vec2, Window};
 use eframe::egui::Event::Key;
 use eframe::egui::Shape::Vec;
 use eframe::egui::WidgetType::ColorButton;
@@ -10,14 +10,32 @@ use eframe::epi::Frame;
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP{} HJKL:\" NM<>?";
 
+pub struct StyleConfig {
+    button_size: f32,
+    button_indent: f32,
+    button_spacing: Vec2,
+}
+
+impl Default for StyleConfig {
+    fn default() -> Self {
+        StyleConfig {
+            button_size: 75.,
+            button_indent: 35.,
+            button_spacing: Vec2::new(10., 10.),
+        }
+    }
+}
+
 pub struct ApplicationConfig {
     pub side_enabled: (bool, bool),
+    pub style: StyleConfig,
 }
 
 impl ApplicationConfig {
     pub fn new() -> Self {
         ApplicationConfig {
             side_enabled: (true, true),
+            style: StyleConfig::default(),
         }
     }
 }
@@ -38,39 +56,6 @@ impl Default for App {
             exit_requested: false,
             resize_requested: false,
         }
-    }
-}
-
-fn char_to_key(key: char) -> egui::Key {
-    match key {
-        'A' => egui::Key::A,
-        'B' => egui::Key::B,
-        'C' => egui::Key::C,
-        'D' => egui::Key::D,
-        'E' => egui::Key::E,
-        'F' => egui::Key::F,
-        'G' => egui::Key::G,
-        'H' => egui::Key::H,
-        'I' => egui::Key::I,
-        'J' => egui::Key::J,
-        'K' => egui::Key::K,
-        'L' => egui::Key::L,
-        'M' => egui::Key::M,
-        'N' => egui::Key::N,
-        'O' => egui::Key::O,
-        'P' => egui::Key::P,
-        'Q' => egui::Key::Q,
-        'R' => egui::Key::R,
-        'S' => egui::Key::S,
-        'T' => egui::Key::T,
-        'U' => egui::Key::U,
-        'V' => egui::Key::V,
-        'W' => egui::Key::W,
-        'X' => egui::Key::X,
-        'Y' => egui::Key::Y,
-        'Z' => egui::Key::Z,
-        ' ' => egui::Key::Space,
-        _ => egui::Key::Space
     }
 }
 
@@ -95,15 +80,7 @@ impl App {
             .min_width(500.0)
             .max_width(500.0)
             .show(ctx, |ui| {
-                // egui::Area::new("right_words_window")
-                //     .fixed_pos(Pos2::new(10., 10.))
-                //     .show(ctx, |ui| {
-                //         ui.label("Right Panel!");
-                //         ui.label("Right Panel!");
-                //         ui.label("Right Panel!");
-                //         ui.label("Right Panel!");
-                //         ui.label("Right Panel!");
-                //     })
+
             });
     }
 
@@ -116,31 +93,46 @@ impl App {
                     .default_height(300.)
                     .show(ctx, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label("HIIHIHIHIHIkjll");
+                            ui.label("WOW SO LOREM VERY IPSUM MUCH CODATUM");
                         })
                     });
                 ui.allocate_space(Vec2::new(0., 400.));
 
-                let button_size = 75.;
-                let buttons_spacing = Vec2::new(10., 10.);
+                self.draw_keys(ui, LEFT_QWERTY_KEYS);
+            });
+    }
 
-                ui.spacing_mut().item_spacing = buttons_spacing;
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `ui`: egui::Ui object
+    /// * `keys`: &str, expects string of letters, with whitespace separators between rows
+    ///
+    /// returns: (), draws keyboard on current `ui`
+    ///
+    /// # Examples
+    /// Draw left side of Colemark layout
+    /// ```
+    /// draw_keys(ui, "QWFPG ARSTD ZXCVB");
+    /// ```
+    fn draw_keys(&mut self, ui: &mut Ui, keys: &str) {
+        let button_size = self.config.style.button_size;
+        ui.spacing_mut().item_spacing = self.config.style.button_spacing;
 
-                let mut row_indent = 0.;
-                for row in LEFT_QWERTY_KEYS.split_whitespace() {
-                    ui.horizontal(|ui| {
-                        ui.add_space(row_indent);
-                        for c in row.chars() {
-                            let pressed = ui.input().key_down(char_to_key(c));
-                            ui.add_sized(Vec2::new(button_size, button_size), Button::new(c.to_string())
-                                .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
-                            );
-                        }
-                    });
-                    row_indent += 35.;
+        let mut current_row_indent = 0.;
+        for row in keys.split_whitespace() {
+            ui.horizontal(|ui| {
+                ui.add_space(current_row_indent);
+                for c in row.chars() {
+                    let pressed = ui.input().key_down(char_to_key(c));
+                    ui.add_sized(Vec2::new(button_size, button_size), Button::new(c.to_string())
+                        .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
+                    );
                 }
-
-        });
+            });
+            current_row_indent += self.config.style.button_indent;
+        }
     }
 
     fn draw_about_window(ctx: &CtxRef) {
@@ -236,3 +228,37 @@ impl epi::App for App {
         "HemiTyper"
     }
 }
+
+fn char_to_key(c: char) -> egui::Key {
+    match c {
+        'A' => egui::Key::A,
+        'B' => egui::Key::B,
+        'C' => egui::Key::C,
+        'D' => egui::Key::D,
+        'E' => egui::Key::E,
+        'F' => egui::Key::F,
+        'G' => egui::Key::G,
+        'H' => egui::Key::H,
+        'I' => egui::Key::I,
+        'J' => egui::Key::J,
+        'K' => egui::Key::K,
+        'L' => egui::Key::L,
+        'M' => egui::Key::M,
+        'N' => egui::Key::N,
+        'O' => egui::Key::O,
+        'P' => egui::Key::P,
+        'Q' => egui::Key::Q,
+        'R' => egui::Key::R,
+        'S' => egui::Key::S,
+        'T' => egui::Key::T,
+        'U' => egui::Key::U,
+        'V' => egui::Key::V,
+        'W' => egui::Key::W,
+        'X' => egui::Key::X,
+        'Y' => egui::Key::Y,
+        'Z' => egui::Key::Z,
+        ' ' => egui::Key::Space,
+        _ => egui::Key::Space
+    }
+}
+
