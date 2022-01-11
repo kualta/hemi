@@ -3,8 +3,12 @@ use std::collections::hash_map::IntoKeys;
 use eframe::{egui, epi};
 use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, CtxRef, Pos2, Stroke, Vec2, Window};
 use eframe::egui::Event::Key;
+use eframe::egui::Shape::Vec;
 use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
+
+const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
+const RIGHT_QWERTY_KEYS: &str = "YUIOP{} HJKL:\" NM<>?";
 
 pub struct ApplicationConfig {
     pub side_enabled: (bool, bool),
@@ -37,35 +41,35 @@ impl Default for App {
     }
 }
 
-fn get_key_from_str(key: &str) -> egui::Key {
+fn char_to_key(key: char) -> egui::Key {
     match key {
-        "A" => egui::Key::A,
-        "B" => egui::Key::B,
-        "C" => egui::Key::C,
-        "D" => egui::Key::D,
-        "E" => egui::Key::E,
-        "F" => egui::Key::F,
-        "G" => egui::Key::G,
-        "H" => egui::Key::H,
-        "I" => egui::Key::I,
-        "J" => egui::Key::J,
-        "K" => egui::Key::K,
-        "L" => egui::Key::L,
-        "M" => egui::Key::M,
-        "N" => egui::Key::N,
-        "O" => egui::Key::O,
-        "P" => egui::Key::P,
-        "Q" => egui::Key::Q,
-        "R" => egui::Key::R,
-        "S" => egui::Key::S,
-        "T" => egui::Key::T,
-        "U" => egui::Key::U,
-        "V" => egui::Key::V,
-        "W" => egui::Key::W,
-        "X" => egui::Key::X,
-        "Y" => egui::Key::Y,
-        "Z" => egui::Key::Z,
-        " " => egui::Key::Space,
+        'A' => egui::Key::A,
+        'B' => egui::Key::B,
+        'C' => egui::Key::C,
+        'D' => egui::Key::D,
+        'E' => egui::Key::E,
+        'F' => egui::Key::F,
+        'G' => egui::Key::G,
+        'H' => egui::Key::H,
+        'I' => egui::Key::I,
+        'J' => egui::Key::J,
+        'K' => egui::Key::K,
+        'L' => egui::Key::L,
+        'M' => egui::Key::M,
+        'N' => egui::Key::N,
+        'O' => egui::Key::O,
+        'P' => egui::Key::P,
+        'Q' => egui::Key::Q,
+        'R' => egui::Key::R,
+        'S' => egui::Key::S,
+        'T' => egui::Key::T,
+        'U' => egui::Key::U,
+        'V' => egui::Key::V,
+        'W' => egui::Key::W,
+        'X' => egui::Key::X,
+        'Y' => egui::Key::Y,
+        'Z' => egui::Key::Z,
+        ' ' => egui::Key::Space,
         _ => egui::Key::Space
     }
 }
@@ -117,10 +121,25 @@ impl App {
                     });
                 ui.allocate_space(Vec2::new(0., 400.));
 
-                let pressed = ui.input().key_down(egui::Key::A);
-                ui.add_sized(Vec2::new(50., 50.), Button::new("A")
-                    .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
-                );
+                let button_size = 75.;
+                let buttons_spacing = Vec2::new(10., 10.);
+
+                ui.spacing_mut().item_spacing = buttons_spacing;
+
+                let mut row_indent = 0.;
+                for row in LEFT_QWERTY_KEYS.split_whitespace() {
+                    ui.horizontal(|ui| {
+                        ui.add_space(row_indent);
+                        for c in row.chars() {
+                            let pressed = ui.input().key_down(char_to_key(c));
+                            ui.add_sized(Vec2::new(button_size, button_size), Button::new(c.to_string())
+                                .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
+                            );
+                        }
+                    });
+                    row_indent += 35.;
+                }
+
         });
     }
 
