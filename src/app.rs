@@ -1,7 +1,9 @@
+use std::alloc::Layout;
+use std::collections::hash_map::IntoKeys;
 use eframe::{egui, epi};
-use eframe::egui::{CentralPanel, Color32, CtxRef, Pos2, Vec2, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, CtxRef, Pos2, Stroke, Vec2, Window};
 use eframe::egui::Event::Key;
-use eframe::egui::Key::A;
+use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
 
 pub struct ApplicationConfig {
@@ -32,6 +34,39 @@ impl Default for App {
             exit_requested: false,
             resize_requested: false,
         }
+    }
+}
+
+fn get_key_from_str(key: &str) -> egui::Key {
+    match key {
+        "A" => egui::Key::A,
+        "B" => egui::Key::B,
+        "C" => egui::Key::C,
+        "D" => egui::Key::D,
+        "E" => egui::Key::E,
+        "F" => egui::Key::F,
+        "G" => egui::Key::G,
+        "H" => egui::Key::H,
+        "I" => egui::Key::I,
+        "J" => egui::Key::J,
+        "K" => egui::Key::K,
+        "L" => egui::Key::L,
+        "M" => egui::Key::M,
+        "N" => egui::Key::N,
+        "O" => egui::Key::O,
+        "P" => egui::Key::P,
+        "Q" => egui::Key::Q,
+        "R" => egui::Key::R,
+        "S" => egui::Key::S,
+        "T" => egui::Key::T,
+        "U" => egui::Key::U,
+        "V" => egui::Key::V,
+        "W" => egui::Key::W,
+        "X" => egui::Key::X,
+        "Y" => egui::Key::Y,
+        "Z" => egui::Key::Z,
+        " " => egui::Key::Space,
+        _ => egui::Key::Space
     }
 }
 
@@ -72,14 +107,44 @@ impl App {
         // using CentralPanel because SidePanel::left adds additional width and doesn't end in the center
         egui::CentralPanel::default()
             .show(ctx, |ui| {
-                ui.label("HI");
+                egui::TopBottomPanel::top("text_panel")
+                    .resizable(false)
+                    .default_height(300.)
+                    .show(ctx, |ui| {
+                        ui.centered_and_justified(|ui| {
+                            ui.label("HIIHIHIHIHIkjll");
+                        })
+                    });
+                ui.allocate_space(Vec2::new(0., 400.));
+
+                let pressed = ui.input().key_down(egui::Key::A);
+                ui.add_sized(Vec2::new(50., 50.), Button::new("A")
+                    .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
+                );
         });
     }
 
     fn draw_about_window(ctx: &CtxRef) {
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Built with egui");
-            ui.label("lectroMathew, 2022");
+                egui::Area::new("about_area")
+                    .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
+                    .show(ctx, |ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.horizontal(|ui| {
+                            egui::Layout::top_down_justified(Align::Center);
+                            ui.label("made by ");
+                            ui.hyperlink_to("lectroMathew", "https://github.com/lectroMathew");
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("powered by ");
+                            ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                            ui.label(" and ");
+                            ui.hyperlink_to("eframe", "https://github.com/emilk/egui/tree/master/eframe");
+                        });
+                        ui.add_space(4.);
+                        egui::warn_if_debug_build(ui);
+                    });
         });
     }
 
