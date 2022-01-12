@@ -8,12 +8,13 @@ use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
-const RIGHT_QWERTY_KEYS: &str = "YUIOP{} HJKL:\" NM<>?";
+const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL;\' NM,./";
 
 pub struct StyleConfig {
     button_size: f32,
     button_indent: f32,
     button_spacing: Vec2,
+    keyboard_top_indent: f32,
 }
 
 impl Default for StyleConfig {
@@ -22,6 +23,7 @@ impl Default for StyleConfig {
             button_size: 75.,
             button_indent: 35.,
             button_spacing: Vec2::new(10., 10.),
+            keyboard_top_indent: 400.
         }
     }
 }
@@ -75,41 +77,48 @@ impl App {
     }
 
     fn draw_right_panel(&mut self, ctx: &CtxRef) {
-        egui::SidePanel::right("right_panel")
+        egui::Window::new("right_panel")
             .resizable(false)
-            .min_width(500.0)
-            .max_width(500.0)
             .show(ctx, |ui| {
+                egui::TopBottomPanel::top("right_text_panel")
+                    .resizable(false)
+                    .height_range(300. ..= 300.)
+                    .show_inside(ui, |ui| {
+                        ui.centered_and_justified(|ui| {
+                            ui.label("WOW SO CODATUM VERY IPSUM MUCH LOREM");
+                        })
+                    });
+                ui.allocate_space(Vec2::new(0., self.config.style.keyboard_top_indent));
 
+                self.draw_keys(ui, RIGHT_QWERTY_KEYS);
             });
     }
 
     fn draw_left_panel(&mut self, ctx: &CtxRef) {
-        // using CentralPanel because SidePanel::left adds additional width and doesn't end in the center
-        egui::CentralPanel::default()
+        egui::Window::new("left_panel")
+            .open(&mut true)
             .show(ctx, |ui| {
-                egui::TopBottomPanel::top("text_panel")
+                egui::TopBottomPanel::top("left_text_panel")
                     .resizable(false)
-                    .default_height(300.)
-                    .show(ctx, |ui| {
+                    .height_range(300. ..= 300.)
+                    .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
                             ui.label("WOW SO LOREM VERY IPSUM MUCH CODATUM");
                         })
                     });
-                ui.allocate_space(Vec2::new(0., 400.));
+                ui.allocate_space(Vec2::new(0., self.config.style.keyboard_top_indent));
 
                 self.draw_keys(ui, LEFT_QWERTY_KEYS);
             });
     }
 
     ///
+    /// draws keyboard on current `ui`
     ///
     /// # Arguments
     ///
-    /// * `ui`: egui::Ui object
-    /// * `keys`: &str, expects string of letters, with whitespace separators between rows
-    ///
-    /// returns: (), draws keyboard on current `ui`
+    /// * `ui`: `egui::Ui` object
+    /// * `keys`: string of letters, with whitespace separators between rows
     ///
     /// # Examples
     /// Draw left side of Colemark layout
@@ -136,7 +145,6 @@ impl App {
     }
 
     fn draw_about_window(ctx: &CtxRef) {
-
         egui::CentralPanel::default().show(ctx, |ui| {
                 egui::Area::new("about_area")
                     .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
@@ -189,8 +197,8 @@ impl epi::App for App {
                 self.draw_left_panel(ctx);
             },
             (true, true) => {
-                self.draw_right_panel(ctx);
                 self.draw_left_panel(ctx);
+                self.draw_right_panel(ctx);
             },
         }
 
