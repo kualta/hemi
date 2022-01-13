@@ -120,8 +120,9 @@ impl App {
                         })
                     });
                 ui.add_space(150.);
-                let input_keys = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
-                self.draw_keys(ui, input_keys);
+                let input_state = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
+                App::update_buffer(&mut self.right_text_buffer, &input_state);
+                self.draw_keys(ui, input_state);
                 ui.add_space(50.);
             });
     }
@@ -138,23 +139,24 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label("WOW SO LOREM VERY IPSUM MUCH CODATUM");
+                            ui.label(RichText::from(&self.left_text_buffer));
                         })
                     });
                 ui.add_space(150.);
                 let input_state = self.check_pressed(ui, LEFT_QWERTY_KEYS);
+                App::update_buffer(&mut self.left_text_buffer, &input_state);
                 self.draw_keys(ui, input_state);
                 ui.add_space(50.);
             });
     }
 
-    fn check_pressed<'a>(&mut self, ui: & mut Ui, keys: &'a str) -> Vec<Vec<InputKey>> {
+    fn check_pressed(&mut self, ui: &mut Ui, keys: &str) -> Vec<Vec<InputKey>> {
         let mut input_state: Vec<Vec<InputKey>> = Vec::new();
         for row in keys.split_whitespace() {
             let mut input_row = Vec::new();
             for c in row.chars() {
                 let key = char_to_key(c);
-                input_row.push(InputKey::new(c, key, ui.input().key_down(key)));
+                input_row.push(InputKey::new(c, key, ui.input().key_pressed(key)));
             }
             input_state.push(input_row);
         }
@@ -162,19 +164,6 @@ impl App {
         return input_state
     }
 
-    ///
-    /// draws keyboard on current `ui`
-    ///
-    /// # Arguments
-    ///
-    /// * `ui`: `egui::Ui` object
-    /// * `keys`: string of letters, with whitespace separators between rows
-    ///
-    /// # Examples
-    /// Draw left side of Colemark layout
-    /// ```
-    /// draw_keys(ui, "QWFPG ARSTD ZXCVB");
-    /// ```
     fn draw_keys(&mut self, ui: &mut Ui, input_state: Vec<Vec<InputKey>>) {
         let button_size = self.config.style.button_size;
         ui.spacing_mut().item_spacing = self.config.style.button_spacing;
@@ -184,9 +173,6 @@ impl App {
             ui.horizontal(|ui| {
                 ui.add_space(current_row_indent);
                 for key in row {
-                    if key.pressed {
-                        self.right_text_buffer += &key.character.to_string();
-                    }
                     ui.add_sized(Vec2::new(button_size, button_size), Button::new(key.character.to_string())
 
                             //                   converting bool to either 0. or 1.
@@ -232,6 +218,15 @@ impl App {
                 }
             });
         });
+    }
+    fn update_buffer(buffer: &mut String, input_state: &Vec<Vec<InputKey>>) {
+        for row in input_state {
+            for key in row {
+                if key.pressed {
+                    buffer.push(key.character);
+                }
+            }
+        }
     }
 }
 
@@ -342,7 +337,7 @@ fn char_to_key(c: char) -> egui::Key {
         ' ' => egui::Key::Space,
         // ';' => egui::Key::Semicolon,
         // TODO: Add special characters handling when egui adds support for them ¯\_(ツ)_/¯
-        _ => egui::Key::Space
+        _ => egui::Key::Escape
     }
 }
 
