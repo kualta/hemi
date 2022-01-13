@@ -1,20 +1,24 @@
 use std::alloc::Layout;
 use std::collections::hash_map::IntoKeys;
+use std::sync::Arc;
 use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, CtxRef, Pos2, Stroke, Ui, Vec2, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba,
+                   Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
+use eframe::egui::epaint::Shadow;
 use eframe::egui::Event::Key;
 use eframe::egui::Shape::Vec;
 use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
-const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL;\' NM,./";
+const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 
 pub struct StyleConfig {
     button_size: f32,
     button_indent: f32,
     button_spacing: Vec2,
     keyboard_top_indent: f32,
+    window_shadow: Shadow,
 }
 
 impl Default for StyleConfig {
@@ -23,7 +27,11 @@ impl Default for StyleConfig {
             button_size: 75.,
             button_indent: 35.,
             button_spacing: Vec2::new(10., 10.),
-            keyboard_top_indent: 400.
+            keyboard_top_indent: 400.,
+            window_shadow: Shadow {
+                extrusion: 0.1,
+                color: Color32::RED
+            }
         }
     }
 }
@@ -79,6 +87,10 @@ impl App {
     fn draw_right_panel(&mut self, ctx: &CtxRef) {
         egui::Window::new("right_panel")
             .resizable(false)
+            .title_bar(false)
+            .collapsible(false)
+            .anchor(Align2::RIGHT_CENTER, Vec2::new(0., 0.))
+            .min_height(800.)
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("right_text_panel")
                     .resizable(false)
@@ -88,15 +100,18 @@ impl App {
                             ui.label("WOW SO CODATUM VERY IPSUM MUCH LOREM");
                         })
                     });
-                ui.allocate_space(Vec2::new(0., self.config.style.keyboard_top_indent));
-
+                ui.add_space(150.);
                 self.draw_keys(ui, RIGHT_QWERTY_KEYS);
+                ui.add_space(50.);
             });
     }
 
     fn draw_left_panel(&mut self, ctx: &CtxRef) {
         egui::Window::new("left_panel")
-            .open(&mut true)
+            .resizable(false)
+            .title_bar(false)
+            .collapsible(false)
+            .anchor(Align2::LEFT_CENTER, Vec2::new(0., 0.))
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("left_text_panel")
                     .resizable(false)
@@ -106,9 +121,9 @@ impl App {
                             ui.label("WOW SO LOREM VERY IPSUM MUCH CODATUM");
                         })
                     });
-                ui.allocate_space(Vec2::new(0., self.config.style.keyboard_top_indent));
-
+                ui.add_space(150.);
                 self.draw_keys(ui, LEFT_QWERTY_KEYS);
+                ui.add_space(50.);
             });
     }
 
@@ -186,21 +201,26 @@ impl epi::App for App {
 
         self.draw_top_bar(ctx);
 
-        match &mut self.config.side_enabled {
-            (false, false) => {
-                App::draw_about_window(ctx);
-            },
-            (false, true) => {
-                self.draw_right_panel(ctx);
-            },
-            (true, false) => {
-                self.draw_left_panel(ctx);
-            },
-            (true, true) => {
-                self.draw_left_panel(ctx);
-                self.draw_right_panel(ctx);
-            },
-        }
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.visuals_mut().window_shadow = self.config.style.window_shadow;
+            match &mut self.config.side_enabled {
+                (false, false) => {
+                    App::draw_about_window(ctx);
+                },
+                (false, true) => {
+                    self.draw_right_panel(ctx);
+                },
+                (true, false) => {
+                    self.draw_left_panel(ctx);
+                },
+                (true, true) => {
+                    self.draw_left_panel(ctx);
+                    self.draw_right_panel(ctx);
+                },
+            }
+        });
+
 
         if self.resize_requested {
             self.recalculate_size(frame);
@@ -224,6 +244,38 @@ impl epi::App for App {
         if let Some(storage) = _storage {
             *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
         }
+
+        let app_style = Style {
+            body_text_style: TextStyle::Small,
+            override_text_style: None,
+            wrap: None,
+            spacing: Default::default(),
+            interaction: Default::default(),
+            visuals: Visuals {
+                dark_mode: false,
+                override_text_color: None,
+                widgets: Default::default(),
+                selection: Default::default(),
+                hyperlink_color: Color32::from_rgb(36, 89, 200),
+                faint_bg_color: Default::default(),
+                extreme_bg_color: Default::default(),
+                code_bg_color: Default::default(),
+                window_corner_radius: 0.0,
+                window_shadow: self.config.style.window_shadow,
+                popup_shadow: Default::default(),
+                resize_corner_size: 0.0,
+                text_cursor_width: 0.0,
+                text_cursor_preview: false,
+                clip_rect_margin: 0.0,
+                button_frame: false,
+                collapsing_header_frame: false
+            },
+            animation_time: 0.0,
+            debug: Default::default(),
+            explanation_tooltips: false
+        };
+
+        _ctx.set_style(Arc::new(app_style));
     }
 
     /// Saves the state before shutdown.
@@ -266,6 +318,8 @@ fn char_to_key(c: char) -> egui::Key {
         'Y' => egui::Key::Y,
         'Z' => egui::Key::Z,
         ' ' => egui::Key::Space,
+        // ';' => egui::Key::Semicolon,
+        // TODO: Add special characters handling when egui adds support for them ¯\_(ツ)_/¯
         _ => egui::Key::Space
     }
 }
