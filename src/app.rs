@@ -1,17 +1,32 @@
 use std::alloc::Layout;
 use std::collections::hash_map::IntoKeys;
 use std::sync::Arc;
+use std::vec::Vec;
 use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba,
-                   Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::Event::Key;
-use eframe::egui::Shape::Vec;
 use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
+
+pub struct InputKey {
+    character: char,
+    key: egui::Key,
+    pressed: bool,
+}
+
+impl InputKey {
+    fn new(character: char, key: egui::Key, pressed: bool) -> Self {
+        InputKey {
+            character,
+            key,
+            pressed,
+        }
+    }
+}
 
 pub struct StyleConfig {
     button_size: f32,
@@ -57,6 +72,8 @@ pub struct App {
     pub config: ApplicationConfig,
     exit_requested: bool,
     resize_requested: bool,
+    left_text_buffer: String,
+    right_text_buffer: String,
 }
 
 impl Default for App {
@@ -65,6 +82,8 @@ impl Default for App {
             config: ApplicationConfig::new(),
             exit_requested: false,
             resize_requested: false,
+            left_text_buffer: Default::default(),
+            right_text_buffer: Default::default()
         }
     }
 }
@@ -97,11 +116,12 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label("WOW SO CODATUM VERY IPSUM MUCH LOREM");
+                            ui.label(RichText::from(&self.right_text_buffer));
                         })
                     });
                 ui.add_space(150.);
-                self.draw_keys(ui, RIGHT_QWERTY_KEYS);
+                let input_keys = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
+                self.draw_keys(ui, input_keys);
                 ui.add_space(50.);
             });
     }
@@ -122,9 +142,24 @@ impl App {
                         })
                     });
                 ui.add_space(150.);
-                self.draw_keys(ui, LEFT_QWERTY_KEYS);
+                let input_state = self.check_pressed(ui, LEFT_QWERTY_KEYS);
+                self.draw_keys(ui, input_state);
                 ui.add_space(50.);
             });
+    }
+
+    fn check_pressed<'a>(&mut self, ui: & mut Ui, keys: &'a str) -> Vec<Vec<InputKey>> {
+        let mut input_state: Vec<Vec<InputKey>> = Vec::new();
+        for row in keys.split_whitespace() {
+            let mut input_row = Vec::new();
+            for c in row.chars() {
+                let key = char_to_key(c);
+                input_row.push(InputKey::new(c, key, ui.input().key_down(key)));
+            }
+            input_state.push(input_row);
+        }
+
+        return input_state
     }
 
     ///
@@ -140,23 +175,27 @@ impl App {
     /// ```
     /// draw_keys(ui, "QWFPG ARSTD ZXCVB");
     /// ```
-    fn draw_keys(&mut self, ui: &mut Ui, keys: &str) {
+    fn draw_keys(&mut self, ui: &mut Ui, input_state: Vec<Vec<InputKey>>) {
         let button_size = self.config.style.button_size;
         ui.spacing_mut().item_spacing = self.config.style.button_spacing;
 
         let mut current_row_indent = 0.;
-        for row in keys.split_whitespace() {
+        for row in input_state {
             ui.horizontal(|ui| {
                 ui.add_space(current_row_indent);
-                for c in row.chars() {
-                    let pressed = ui.input().key_down(char_to_key(c));
-                    ui.add_sized(Vec2::new(button_size, button_size), Button::new(c.to_string())
-                        .stroke(Stroke::new(pressed as i32 as f32, Color32::WHITE))
+                for key in row {
+                    if key.pressed {
+                        self.right_text_buffer += &key.character.to_string();
+                    }
+                    ui.add_sized(Vec2::new(button_size, button_size), Button::new(key.character.to_string())
+
+                            //                   converting bool to either 0. or 1.
+                            .stroke(Stroke::new(key.pressed as i32 as f32, Color32::WHITE))
                     );
                 }
             });
             current_row_indent += self.config.style.button_indent;
-        }
+        };
     }
 
     fn draw_about_window(ctx: &CtxRef) {
@@ -201,7 +240,6 @@ impl epi::App for App {
 
         self.draw_top_bar(ctx);
 
-
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.visuals_mut().window_shadow = self.config.style.window_shadow;
             match &mut self.config.side_enabled {
@@ -220,7 +258,6 @@ impl epi::App for App {
                 },
             }
         });
-
 
         if self.resize_requested {
             self.recalculate_size(frame);
@@ -252,23 +289,8 @@ impl epi::App for App {
             spacing: Default::default(),
             interaction: Default::default(),
             visuals: Visuals {
-                dark_mode: false,
-                override_text_color: None,
-                widgets: Default::default(),
-                selection: Default::default(),
-                hyperlink_color: Color32::from_rgb(36, 89, 200),
-                faint_bg_color: Default::default(),
-                extreme_bg_color: Default::default(),
-                code_bg_color: Default::default(),
-                window_corner_radius: 0.0,
                 window_shadow: self.config.style.window_shadow,
-                popup_shadow: Default::default(),
-                resize_corner_size: 0.0,
-                text_cursor_width: 0.0,
-                text_cursor_preview: false,
-                clip_rect_margin: 0.0,
-                button_frame: false,
-                collapsing_header_frame: false
+                ..Default::default()
             },
             animation_time: 0.0,
             debug: Default::default(),
