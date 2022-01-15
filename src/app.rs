@@ -2,8 +2,10 @@ use std::alloc::Layout;
 use std::collections::hash_map::IntoKeys;
 use std::sync::Arc;
 use std::vec::Vec;
+use std::default::Default;
 use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextBuffer, TextStyle, Ui, Vec2, Visuals, Window};
+use eframe::egui::CursorIcon::{Text};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::Event::Key;
 use eframe::egui::WidgetType::ColorButton;
@@ -11,6 +13,20 @@ use eframe::epi::Frame;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
+
+pub struct TextContainer {
+    buffer: String,
+    max_buffered_chars: u32,
+}
+
+impl TextContainer {
+    fn new() -> Self {
+        TextContainer {
+            buffer: Default::default(),
+            max_buffered_chars: 10
+        }
+    }
+}
 
 pub struct InputKey {
     character: char,
@@ -52,8 +68,8 @@ impl Default for StyleConfig {
 }
 
 pub struct ApplicationConfig {
-    pub side_enabled: (bool, bool),
-    pub style: StyleConfig,
+    side_enabled: (bool, bool),
+    style: StyleConfig,
 }
 
 impl ApplicationConfig {
@@ -72,8 +88,8 @@ pub struct App {
     pub config: ApplicationConfig,
     exit_requested: bool,
     resize_requested: bool,
-    left_text_buffer: String,
-    right_text_buffer: String,
+    left_text_container: TextContainer,
+    right_text_container: TextContainer,
 }
 
 impl Default for App {
@@ -82,8 +98,8 @@ impl Default for App {
             config: ApplicationConfig::new(),
             exit_requested: false,
             resize_requested: false,
-            left_text_buffer: Default::default(),
-            right_text_buffer: Default::default()
+            left_text_container: TextContainer::new(),
+            right_text_container: TextContainer::new(),
         }
     }
 }
@@ -116,13 +132,15 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.right_text_buffer));
+                            ui.label(RichText::from(&self.right_text_container.buffer));
                         })
                     });
                 ui.add_space(150.);
+
                 let input_state = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
-                App::update_buffer(&mut self.right_text_buffer, &input_state);
+                App::update_buffer(&mut self.right_text_container, &input_state);
                 self.draw_keys(ui, input_state);
+
                 ui.add_space(50.);
             });
     }
@@ -139,12 +157,12 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.left_text_buffer));
+                            ui.label(RichText::from(&self.left_text_container.buffer));
                         })
                     });
                 ui.add_space(150.);
                 let input_state = self.check_pressed(ui, LEFT_QWERTY_KEYS);
-                App::update_buffer(&mut self.left_text_buffer, &input_state);
+                App::update_buffer(&mut self.left_text_container, &input_state);
                 self.draw_keys(ui, input_state);
                 ui.add_space(50.);
             });
@@ -219,14 +237,19 @@ impl App {
             });
         });
     }
-    fn update_buffer(buffer: &mut String, input_state: &Vec<Vec<InputKey>>) {
+    fn update_buffer(container: &mut TextContainer, input_state: &Vec<Vec<InputKey>>) {
         for row in input_state {
             for key in row {
                 if key.pressed {
-                    buffer.push(key.character);
+                    container.buffer.push(key.character);
                 }
             }
         }
+
+        if container.buffer.len() > container.max_buffered_chars as usize {
+            container.buffer.remove(0);
+        }
+
     }
 }
 
