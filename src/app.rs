@@ -139,7 +139,7 @@ impl App {
 
                 let input_state = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
                 App::update_buffer(&mut self.right_text_container, &input_state);
-                self.draw_keys(ui, input_state);
+                self.draw_keys(ui, &input_state);
 
                 ui.add_space(50.);
             });
@@ -161,9 +161,11 @@ impl App {
                         })
                     });
                 ui.add_space(150.);
+
                 let input_state = self.check_pressed(ui, LEFT_QWERTY_KEYS);
                 App::update_buffer(&mut self.left_text_container, &input_state);
-                self.draw_keys(ui, input_state);
+                self.draw_keys(ui, &input_state);
+
                 ui.add_space(50.);
             });
     }
@@ -182,7 +184,7 @@ impl App {
         return input_state
     }
 
-    fn draw_keys(&mut self, ui: &mut Ui, input_state: Vec<Vec<InputKey>>) {
+    fn draw_keys(&mut self, ui: &mut Ui, input_state: &Vec<Vec<InputKey>>) {
         let button_size = self.config.style.button_size;
         ui.spacing_mut().item_spacing = self.config.style.button_spacing;
 
