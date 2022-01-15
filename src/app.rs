@@ -5,7 +5,6 @@ use std::vec::Vec;
 use std::default::Default;
 use eframe::{egui, epi};
 use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextBuffer, TextStyle, Ui, Vec2, Visuals, Window};
-use eframe::egui::CursorIcon::{Text};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::Event::Key;
 use eframe::egui::WidgetType::ColorButton;
@@ -13,17 +12,27 @@ use eframe::epi::Frame;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
+const QWERTY_KEYS: &str = "QWERTYUIOP ASDFGHJKL\' ZXCVBNM,./";
 
 pub struct TextContainer {
-    buffer: String,
+    input_buffer: String,
+    generated_buffer: Vec<String>,
     max_buffered_chars: u32,
 }
 
 impl TextContainer {
     fn new() -> Self {
         TextContainer {
-            buffer: Default::default(),
+            input_buffer: "".to_owned(),
+            generated_buffer: Default::default(),
             max_buffered_chars: 10
+        }
+    }
+
+    fn generate_words(&mut self, amount: u32) {
+        for i in 0..amount {
+            self.generated_buffer.push("KOPPU".to_owned());
+            self.generated_buffer.push("SEA".to_owned());
         }
     }
 }
@@ -48,7 +57,6 @@ pub struct StyleConfig {
     button_size: f32,
     button_indent: f32,
     button_spacing: Vec2,
-    keyboard_top_indent: f32,
     window_shadow: Shadow,
 }
 
@@ -58,10 +66,9 @@ impl Default for StyleConfig {
             button_size: 75.,
             button_indent: 35.,
             button_spacing: Vec2::new(10., 10.),
-            keyboard_top_indent: 400.,
             window_shadow: Shadow {
-                extrusion: 0.1,
-                color: Color32::RED
+                extrusion: 0.,
+                color: Color32::BLACK
             }
         }
     }
@@ -119,7 +126,7 @@ impl App {
         frame.set_window_size(new_size);
     }
 
-    fn draw_right_panel(&mut self, ctx: &CtxRef) {
+    fn draw_right_panel(&mut self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
         egui::Window::new("right_panel")
             .resizable(false)
             .title_bar(false)
@@ -132,12 +139,11 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.right_text_container.buffer));
+                            ui.label(RichText::from(&self.right_text_container.input_buffer));
                         })
                     });
                 ui.add_space(150.);
 
-                let input_state = self.check_pressed(ui, RIGHT_QWERTY_KEYS);
                 App::update_buffer(&mut self.right_text_container, &input_state);
                 self.draw_keys(ui, &input_state);
 
@@ -145,7 +151,7 @@ impl App {
             });
     }
 
-    fn draw_left_panel(&mut self, ctx: &CtxRef) {
+    fn draw_left_panel(&mut self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
         egui::Window::new("left_panel")
             .resizable(false)
             .title_bar(false)
@@ -157,12 +163,11 @@ impl App {
                     .height_range(300. ..= 300.)
                     .show_inside(ui, |ui| {
                         ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.left_text_container.buffer));
+                            ui.label(RichText::from(&self.left_text_container.input_buffer));
                         })
                     });
                 ui.add_space(150.);
 
-                let input_state = self.check_pressed(ui, LEFT_QWERTY_KEYS);
                 App::update_buffer(&mut self.left_text_container, &input_state);
                 self.draw_keys(ui, &input_state);
 
@@ -170,7 +175,7 @@ impl App {
             });
     }
 
-    fn check_pressed(&mut self, ui: &mut Ui, keys: &str) -> Vec<Vec<InputKey>> {
+    fn update_keys_state(&mut self, ui: &mut Ui, keys: &str) -> Vec<Vec<InputKey>> {
         let mut input_state: Vec<Vec<InputKey>> = Vec::new();
         for row in keys.split_whitespace() {
             let mut input_row = Vec::new();
@@ -180,6 +185,13 @@ impl App {
             }
             input_state.push(input_row);
         }
+
+        // Check for space input separately because we split by whitespace above.
+        let mut space_row: Vec<InputKey> = Vec::new();
+        space_row.push(InputKey::new(' ',
+                                     egui::Key::Space,
+                                     ui.input().key_pressed(egui::Key::Space)));
+        input_state.push(space_row);
 
         return input_state
     }
@@ -243,13 +255,13 @@ impl App {
         for row in input_state {
             for key in row {
                 if key.pressed {
-                    container.buffer.push(key.character);
+                    container.input_buffer.push(key.character);
                 }
             }
         }
 
-        if container.buffer.len() > container.max_buffered_chars as usize {
-            container.buffer.remove(0);
+        if container.input_buffer.len() > container.max_buffered_chars as usize {
+            container.input_buffer.remove(0);
         }
 
     }
@@ -262,19 +274,23 @@ impl epi::App for App {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.visuals_mut().window_shadow = self.config.style.window_shadow;
+
+            let left_input_state = self.update_keys_state(ui, LEFT_QWERTY_KEYS);
+            let right_input_state = self.update_keys_state(ui, RIGHT_QWERTY_KEYS);
+
             match &mut self.config.side_enabled {
                 (false, false) => {
                     App::draw_about_window(ctx);
                 },
                 (false, true) => {
-                    self.draw_right_panel(ctx);
+                    self.draw_right_panel(ctx, &right_input_state);
                 },
                 (true, false) => {
-                    self.draw_left_panel(ctx);
+                    self.draw_left_panel(ctx, &left_input_state);
                 },
                 (true, true) => {
-                    self.draw_left_panel(ctx);
-                    self.draw_right_panel(ctx);
+                    self.draw_left_panel(ctx, &left_input_state);
+                    self.draw_right_panel(ctx, &right_input_state);
                 },
             }
         });
@@ -309,6 +325,7 @@ impl epi::App for App {
             spacing: Default::default(),
             interaction: Default::default(),
             visuals: Visuals {
+                window_corner_radius: 0.0,
                 window_shadow: self.config.style.window_shadow,
                 ..Default::default()
             },

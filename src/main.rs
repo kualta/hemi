@@ -8,7 +8,7 @@ use eframe::egui::Vec2;
 fn main() {
     let app = HemiTyper::App::default();
 
-    let mut native_options = eframe::NativeOptions {
+    let native_options = eframe::NativeOptions {
         initial_window_size: Some(Vec2::new(1000.0, 800.0)),
         resizable: false,
         ..Default::default()
