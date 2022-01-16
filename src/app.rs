@@ -20,19 +20,35 @@ pub struct TextContainer {
     max_buffered_chars: u32,
 }
 
-impl TextContainer {
-    fn new() -> Self {
+impl Default for TextContainer {
+    fn default() -> Self {
         TextContainer {
             input_buffer: "".to_owned(),
             generated_buffer: Default::default(),
             max_buffered_chars: 10
         }
     }
+}
 
+impl TextContainer {
     fn generate_words(&mut self, amount: u32) {
         for i in 0..amount {
             self.generated_buffer.push("KOPPU".to_owned());
             self.generated_buffer.push("SEA".to_owned());
+        }
+    }
+
+    fn update_input_buffer(&mut self, input_state: &Vec<Vec<InputKey>>) {
+        for row in input_state {
+            for key in row {
+                if key.pressed {
+                    self.input_buffer.push(key.character);
+                }
+            }
+        }
+
+        if self.input_buffer.len() > self.max_buffered_chars as usize {
+            self.input_buffer.remove(0);
         }
     }
 }
@@ -74,15 +90,56 @@ impl Default for StyleConfig {
     }
 }
 
+pub struct TypingPanel {
+    text_container: TextContainer,
+    style_config: StyleConfig,
+    title: String,
+    char_set: String,
+    align: Align2,
+    enabled: bool,
+}
+
+impl TypingPanel {
+    fn update_and_draw(&mut self, ctx: &CtxRef) {
+        if !self.enabled { return; }
+
+        let input_state = App::update_key_state(ctx, &self.char_set);
+
+        self.text_container.update_input_buffer(&input_state);
+        self.draw(ctx, &input_state);
+    }
+
+    fn draw(&self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
+        egui::Window::new(&self.title)
+            .resizable(false)
+            .title_bar(false)
+            .collapsible(false)
+            .anchor(self.align, Vec2::new(0., 0.))
+            .min_height(800.)
+            .show(ctx, |ui| {
+                egui::TopBottomPanel::top(&self.title)
+                    .resizable(false)
+                    .height_range(250. ..= 250.)
+                    .show_inside(ui, |ui| {
+                        ui.centered_and_justified(|ui| {
+                            // TODO: Add last and next words
+                            ui.label(RichText::from(&self.text_container.input_buffer));
+                        })
+                    });
+                ui.add_space(120.);
+                App::draw_keys(&self.style_config, ui, &input_state);
+                ui.add_space(50.);
+            });
+    }
+}
+
 pub struct ApplicationConfig {
-    side_enabled: (bool, bool),
     style: StyleConfig,
 }
 
 impl ApplicationConfig {
     pub fn new() -> Self {
         ApplicationConfig {
-            side_enabled: (true, true),
             style: StyleConfig::default(),
         }
     }
@@ -94,9 +151,8 @@ impl ApplicationConfig {
 pub struct App {
     pub config: ApplicationConfig,
     exit_requested: bool,
-    resize_requested: bool,
-    left_text_container: TextContainer,
-    right_text_container: TextContainer,
+    left_panel: TypingPanel,
+    right_panel: TypingPanel,
 }
 
 impl Default for App {
@@ -104,9 +160,22 @@ impl Default for App {
         Self {
             config: ApplicationConfig::new(),
             exit_requested: false,
-            resize_requested: false,
-            left_text_container: TextContainer::new(),
-            right_text_container: TextContainer::new(),
+            left_panel: TypingPanel {
+                text_container: Default::default(),
+                style_config: Default::default(),
+                title: "left_panel".to_string(),
+                char_set: LEFT_QWERTY_KEYS.to_string(),
+                align: Align2::LEFT_CENTER,
+                enabled: true
+            },
+            right_panel: TypingPanel {
+                text_container: Default::default(),
+                style_config: Default::default(),
+                title: "right_panel".to_string(),
+                char_set: RIGHT_QWERTY_KEYS.to_string(),
+                align: Align2::RIGHT_CENTER,
+                enabled: true
+            },
         }
     }
 }
@@ -116,89 +185,29 @@ impl App {
         self.exit_requested = true;
     }
 
-    fn recalculate_size(&mut self, frame: &Frame) {
-        let mut new_size = Vec2::new(500., 800.);
-
-        if self.config.side_enabled.0 && self.config.side_enabled.1 {
-            new_size.x += 500.0;
-        }
-
-        frame.set_window_size(new_size);
-    }
-
-    fn draw_right_panel(&mut self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
-        egui::Window::new("right_panel")
-            .resizable(false)
-            .title_bar(false)
-            .collapsible(false)
-            .anchor(Align2::RIGHT_CENTER, Vec2::new(0., 0.))
-            .min_height(800.)
-            .show(ctx, |ui| {
-                egui::TopBottomPanel::top("right_text_panel")
-                    .resizable(false)
-                    .height_range(300. ..= 300.)
-                    .show_inside(ui, |ui| {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.right_text_container.input_buffer));
-                        })
-                    });
-                ui.add_space(150.);
-
-                App::update_buffer(&mut self.right_text_container, &input_state);
-                self.draw_keys(ui, &input_state);
-
-                ui.add_space(50.);
-            });
-    }
-
-    fn draw_left_panel(&mut self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
-        egui::Window::new("left_panel")
-            .resizable(false)
-            .title_bar(false)
-            .collapsible(false)
-            .anchor(Align2::LEFT_CENTER, Vec2::new(0., 0.))
-            .show(ctx, |ui| {
-                egui::TopBottomPanel::top("left_text_panel")
-                    .resizable(false)
-                    .height_range(300. ..= 300.)
-                    .show_inside(ui, |ui| {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(RichText::from(&self.left_text_container.input_buffer));
-                        })
-                    });
-                ui.add_space(150.);
-
-                App::update_buffer(&mut self.left_text_container, &input_state);
-                self.draw_keys(ui, &input_state);
-
-                ui.add_space(50.);
-            });
-    }
-
-    fn update_keys_state(&mut self, ui: &mut Ui, keys: &str) -> Vec<Vec<InputKey>> {
+    pub fn update_key_state(ctx: &CtxRef, keys: &str) -> Vec<Vec<InputKey>> {
         let mut input_state: Vec<Vec<InputKey>> = Vec::new();
         for row in keys.split_whitespace() {
             let mut input_row = Vec::new();
             for c in row.chars() {
                 let key = char_to_key(c);
-                input_row.push(InputKey::new(c, key, ui.input().key_pressed(key)));
+                input_row.push(InputKey::new(c, key, ctx.input().key_pressed(key)));
             }
             input_state.push(input_row);
         }
 
-        // Check for space input separately because we split by whitespace above.
-        let mut space_row: Vec<InputKey> = Vec::new();
-        space_row.push(InputKey::new(' ',
-                                     egui::Key::Space,
-                                     ui.input().key_pressed(egui::Key::Space)));
-        input_state.push(space_row);
+        // Add space bar as last input row
+        let mut space_bar: Vec<InputKey> = Vec::new();
+        space_bar.push(InputKey::new(' ', egui::Key::Space,
+                                     ctx.input().key_pressed(egui::Key::Space)));
+        input_state.push(space_bar);
 
         return input_state
     }
 
-    fn draw_keys(&mut self, ui: &mut Ui, input_state: &Vec<Vec<InputKey>>) {
-        let button_size = self.config.style.button_size;
-        ui.spacing_mut().item_spacing = self.config.style.button_spacing;
+    fn draw_keys(style_config: &StyleConfig, ui: &mut Ui, input_state: &Vec<Vec<InputKey>>) {
+        let button_size = style_config.button_size;
+        ui.spacing_mut().item_spacing = style_config.button_spacing;
 
         let mut current_row_indent = 0.;
         for row in input_state {
@@ -212,7 +221,7 @@ impl App {
                     );
                 }
             });
-            current_row_indent += self.config.style.button_indent;
+            current_row_indent += style_config.button_indent;
         };
     }
 
@@ -239,70 +248,48 @@ impl App {
         });
     }
 
-    fn draw_top_bar(&mut self, ctx: &CtxRef) {
+    fn draw_top_bar(&mut self, ctx: &CtxRef, frame: &epi::Frame) {
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
+            let mut resize_requested = false;
+
             ui.horizontal(|ui| {
-                if ui.checkbox(&mut self.config.side_enabled.0, "Left panel").changed() {
-                    self.resize_requested = true;
+                if ui.checkbox(&mut self.left_panel.enabled, "Left panel").changed() {
+                    resize_requested = true;
                 }
-                if ui.checkbox(&mut self.config.side_enabled.1, "Right panel").changed() {
-                    self.resize_requested = true;
+                if ui.checkbox(&mut self.right_panel.enabled, "Right panel").changed() {
+                    resize_requested = true;
                 }
             });
-        });
-    }
-    fn update_buffer(container: &mut TextContainer, input_state: &Vec<Vec<InputKey>>) {
-        for row in input_state {
-            for key in row {
-                if key.pressed {
-                    container.input_buffer.push(key.character);
+
+            if resize_requested {
+                let mut new_size = Vec2::new(500., 800.);
+
+                if self.right_panel.enabled && self.left_panel.enabled {
+                    new_size.x += 500.0;
                 }
+
+                frame.set_window_size(new_size);
             }
-        }
-
-        if container.input_buffer.len() > container.max_buffered_chars as usize {
-            container.input_buffer.remove(0);
-        }
-
+        });
     }
 }
 
 impl epi::App for App {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
 
-        self.draw_top_bar(ctx);
+        self.draw_top_bar(ctx, frame);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.visuals_mut().window_shadow = self.config.style.window_shadow;
 
-            let left_input_state = self.update_keys_state(ui, LEFT_QWERTY_KEYS);
-            let right_input_state = self.update_keys_state(ui, RIGHT_QWERTY_KEYS);
+            self.left_panel.update_and_draw(ctx);
+            self.right_panel.update_and_draw(ctx);
 
-            match &mut self.config.side_enabled {
-                (false, false) => {
-                    App::draw_about_window(ctx);
-                },
-                (false, true) => {
-                    self.draw_right_panel(ctx, &right_input_state);
-                },
-                (true, false) => {
-                    self.draw_left_panel(ctx, &left_input_state);
-                },
-                (true, true) => {
-                    self.draw_left_panel(ctx, &left_input_state);
-                    self.draw_right_panel(ctx, &right_input_state);
-                },
+            if !self.left_panel.enabled && !self.right_panel.enabled {
+                App::draw_about_window(ctx);
             }
         });
 
-        if self.resize_requested {
-            self.recalculate_size(frame);
-            self.resize_requested = false;
-        }
-
-        if self.exit_requested {
-            frame.quit()
-        };
+        if self.exit_requested { frame.quit() };
     }
 
     /// Called once before the first frame.
