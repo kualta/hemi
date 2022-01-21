@@ -10,6 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 eframe = "0.16.0"
+rand = "0.8.4"
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]

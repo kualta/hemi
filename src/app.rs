@@ -5,17 +5,19 @@ use std::vec::Vec;
 use std::default::Default;
 use std::ops::Div;
 use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextBuffer, TextStyle, Ui, Vec2, Visuals, Window};
+use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::Event::Key;
 use eframe::egui::WidgetType::ColorButton;
 use eframe::epi::Frame;
+use rand::Rng;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 const QWERTY_KEYS: &str = "QWERTYUIOP ASDFGHJKL\' ZXCVBNM,./";
 
 pub struct TextContainer {
+    char_set: String,
     input_buffer: String,
     generated_buffer: Vec<String>,
     current_index: usize,
@@ -25,6 +27,7 @@ pub struct TextContainer {
 impl Default for TextContainer {
     fn default() -> Self {
         TextContainer {
+            char_set: "A".to_string(),
             input_buffer: "".to_owned(),
             generated_buffer: Default::default(),
             current_index: 0,
@@ -38,7 +41,7 @@ impl TextContainer {
         if self.current_index == 0 {
             return None;
         }
-        return Some(&self.generated_buffer[self.current_index - 1])
+        return Some(&self.generated_buffer[self.current_index])
     }
 
     fn get_next_word(&self) -> Option<&String> {
@@ -48,13 +51,18 @@ impl TextContainer {
         return Some(&self.generated_buffer[self.current_index + 1])
     }
 
-    fn generate_words(&mut self, amount: u32, char_set: &str) {
+    fn generate_words(&mut self, amount: u32) {
         let mut rng = rand::thread_rng();
+        let mut new_word = "".to_owned();
+        let mut clean_char_set = self.char_set.clone().replace(" ", "");
+        let mut clean_char_set: Vec<char> = clean_char_set.chars().collect();
 
         for _ in 0..amount {
-            for length in 4..5 {
-
+            new_word = "".to_owned();
+            for _ in 1..rng.gen_range(3 ..= 7) {
+                new_word.push(clean_char_set[rng.gen_range(0..clean_char_set.len())]);
             }
+            self.generated_buffer.push(new_word.to_string());
         }
     }
 
@@ -126,7 +134,6 @@ pub struct TypingPanel {
     text_container: TextContainer,
     style_config: StyleConfig,
     title: String,
-    char_set: String,
     align: Align2,
     enabled: bool,
 }
@@ -135,7 +142,7 @@ impl TypingPanel {
     fn update_and_draw(&mut self, ctx: &CtxRef) {
         if !self.enabled { return; }
 
-        let input_state = App::update_key_state(ctx, &self.char_set);
+        let input_state = App::update_key_state(ctx, &self.text_container.char_set);
 
         self.text_container.update_input_buffer(&input_state);
         self.draw(ctx, &input_state);
@@ -201,18 +208,22 @@ impl Default for App {
             config: ApplicationConfig::new(),
             exit_requested: false,
             left_panel: TypingPanel {
-                text_container: Default::default(),
+                text_container: TextContainer {
+                    char_set: LEFT_QWERTY_KEYS.to_string(),
+                    ..Default::default()
+                },
                 style_config: Default::default(),
                 title: "left_panel".to_string(),
-                char_set: LEFT_QWERTY_KEYS.to_string(),
                 align: Align2::LEFT_CENTER,
                 enabled: true
             },
             right_panel: TypingPanel {
-                text_container: Default::default(),
+                text_container: TextContainer {
+                    char_set: RIGHT_QWERTY_KEYS.to_string(),
+                    ..Default::default()
+                },
                 style_config: Default::default(),
                 title: "right_panel".to_string(),
-                char_set: RIGHT_QWERTY_KEYS.to_string(),
                 align: Align2::RIGHT_CENTER,
                 enabled: true
             },
