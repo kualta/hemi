@@ -3,6 +3,7 @@ use std::collections::hash_map::IntoKeys;
 use std::sync::Arc;
 use std::vec::Vec;
 use std::default::Default;
+use std::ops::Div;
 use eframe::{egui, epi};
 use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextBuffer, TextStyle, Ui, Vec2, Visuals, Window};
 use eframe::egui::epaint::Shadow;
@@ -17,6 +18,7 @@ const QWERTY_KEYS: &str = "QWERTYUIOP ASDFGHJKL\' ZXCVBNM,./";
 pub struct TextContainer {
     input_buffer: String,
     generated_buffer: Vec<String>,
+    current_index: usize,
     max_buffered_chars: u32,
 }
 
@@ -25,16 +27,34 @@ impl Default for TextContainer {
         TextContainer {
             input_buffer: "".to_owned(),
             generated_buffer: Default::default(),
+            current_index: 0,
             max_buffered_chars: 10
         }
     }
 }
 
 impl TextContainer {
-    fn generate_words(&mut self, amount: u32) {
-        for i in 0..amount {
-            self.generated_buffer.push("KOPPU".to_owned());
-            self.generated_buffer.push("SEA".to_owned());
+    fn get_last_word(&self) -> Option<&String> {
+        if self.current_index == 0 {
+            return None;
+        }
+        return Some(&self.generated_buffer[self.current_index - 1])
+    }
+
+    fn get_next_word(&self) -> Option<&String> {
+        if self.current_index + 1 >= self.generated_buffer.len() {
+            return None;
+        }
+        return Some(&self.generated_buffer[self.current_index + 1])
+    }
+
+    fn generate_words(&mut self, amount: u32, char_set: &str) {
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..amount {
+            for length in 4..5 {
+
+            }
         }
     }
 
@@ -44,11 +64,23 @@ impl TextContainer {
                 if key.pressed {
                     self.input_buffer.push(key.character);
                 }
+                if key.key == egui::Key::Space && key.pressed{
+                    self.input_buffer.clear();
+                    self.try_increment();
+                }
             }
         }
 
         if self.input_buffer.len() > self.max_buffered_chars as usize {
             self.input_buffer.remove(0);
+        }
+    }
+
+    fn try_increment(&mut self) {
+        if self.current_index + 1 >= self.generated_buffer.len() {
+            self.generate_words(32);
+        } else {
+            self.current_index += 1;
         }
     }
 }
@@ -121,10 +153,18 @@ impl TypingPanel {
                     .resizable(false)
                     .height_range(250. ..= 250.)
                     .show_inside(ui, |ui| {
-                        ui.centered_and_justified(|ui| {
-                            // TODO: Add last and next words
-                            ui.label(RichText::from(&self.text_container.input_buffer));
-                        })
+                        ui.add_space(125.);
+                        ui.horizontal(|ui| {
+                            ui.add_space(150.);
+                            ui.label(RichText::from(self.text_container
+                                .get_last_word()
+                                .unwrap_or(&"".to_owned())));
+                            ui.add_sized(Vec2::new(100., 30.), egui::Label::new(
+                                RichText::from(&self.text_container.input_buffer)));
+                            ui.label(RichText::from(self.text_container
+                                .get_next_word()
+                                .unwrap_or(&"".to_owned())));
+                        });
                     });
                 ui.add_space(120.);
                 App::draw_keys(&self.style_config, ui, &input_state);
@@ -214,7 +254,8 @@ impl App {
             ui.horizontal(|ui| {
                 ui.add_space(current_row_indent);
                 for key in row {
-                    ui.add_sized(Vec2::new(button_size, button_size), Button::new(key.character.to_string())
+                    let width_mul = if key.key == egui::Key::Space { 4.6 } else { 1. };
+                    ui.add_sized(Vec2::new(button_size * width_mul, button_size), Button::new(key.character.to_string())
 
                             //                   converting bool to either 0. or 1.
                             .stroke(Stroke::new(key.pressed as i32 as f32, Color32::WHITE))
@@ -322,6 +363,8 @@ impl epi::App for App {
         };
 
         _ctx.set_style(Arc::new(app_style));
+        self.right_panel.text_container.generate_words(10);
+        self.left_panel.text_container.generate_words(10);
     }
 
     /// Saves the state before shutdown.
