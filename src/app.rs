@@ -162,15 +162,19 @@ impl TypingPanel {
                     .show_inside(ui, |ui| {
                         ui.add_space(125.);
                         ui.horizontal(|ui| {
-                            ui.add_space(150.);
-                            ui.label(RichText::from(self.text_container
+                            ui.add_space(75.);
+                            ui.add_sized(Vec2::new(100., 30.), egui::Label::new(
+                                RichText::from(self.text_container
                                 .get_last_word()
-                                .unwrap_or(&"".to_owned())));
+                                .unwrap_or(&"".to_owned())
+                                )));
                             ui.add_sized(Vec2::new(100., 30.), egui::Label::new(
                                 RichText::from(&self.text_container.input_buffer)));
-                            ui.label(RichText::from(self.text_container
+                            ui.add_sized(Vec2::new(100., 30.),egui::Label::new(
+                                RichText::from(self.text_container
                                 .get_next_word()
-                                .unwrap_or(&"".to_owned())));
+                                .unwrap_or(&"".to_owned())
+                                )));
                         });
                     });
                 ui.add_space(120.);
