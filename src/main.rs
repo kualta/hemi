@@ -8,6 +8,7 @@ use eframe::egui::Vec2;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
+
     let app = App::default();
 
     let native_options = eframe::NativeOptions {
@@ -16,5 +17,5 @@ fn main() {
         ..Default::default()
     };
 
-    eframe::run_native(Box::new(app), native_options);
+    eframe::run_native("Hemi Typer", native_options, Box::new(|_cc| Box::new(app)));
 }

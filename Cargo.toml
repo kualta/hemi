@@ -5,9 +5,9 @@ authors = ["lectromoe <contact@lectro.moe>"]
 edition = "2021"
 
 [dependencies]
-eframe = "0.16.0"
-rand = "0.8.4"
-serde = { version = "1", features = ["derive"], optional = true }
+eframe = "0.18.0"
+rand = "0.8.5"
+serde = { version = "1.0.137", features = ["derive"], optional = true }
 
 [features]
 default = []

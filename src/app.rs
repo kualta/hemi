@@ -1,72 +1,67 @@
+use eframe::egui::{self, CentralPanel};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::{
-    Align, Align2, Button, Color32, CtxRef, RichText, Stroke,
-    Style, TextStyle, Ui, Vec2, Visuals,
+    Align, Align2, Button, Color32, Context, InputState, RichText, Stroke, Ui, Vec2,
 };
-use eframe::{egui, epi};
+use eframe::Frame;
 use rand::Rng;
 use std::default::Default;
-use std::sync::Arc;
 use std::vec::Vec;
 
-const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
-const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
-
 pub struct TextContainer {
-    char_set: String,
+    keys: String,
     input_buffer: String,
-    generated_buffer: Vec<String>,
+    words_buffer: Vec<String>,
     current_index: usize,
     max_buffered_chars: u32,
 }
 
-impl Default for TextContainer {
-    fn default() -> Self {
+impl TextContainer {
+    fn new(keys: &str) -> TextContainer {
         TextContainer {
-            char_set: "A".to_string(),
             input_buffer: "".to_owned(),
-            generated_buffer: Default::default(),
+            words_buffer: Default::default(),
             current_index: 0,
             max_buffered_chars: 10,
+            keys: keys.to_owned(),
         }
     }
-}
 
-impl TextContainer {
     fn get_last_word(&self) -> Option<&String> {
         if self.current_index == 0 {
             return None;
         }
-        return Some(&self.generated_buffer[self.current_index]);
+        return Some(&self.words_buffer[self.current_index]);
     }
 
     fn get_next_word(&self) -> Option<&String> {
-        if self.current_index + 1 >= self.generated_buffer.len() {
+        if self.current_index + 1 >= self.words_buffer.len() {
             return None;
         }
-        return Some(&self.generated_buffer[self.current_index + 1]);
+        return Some(&self.words_buffer[self.current_index + 1]);
     }
 
     fn generate_words(&mut self, amount: u32) {
         let mut rng = rand::thread_rng();
-        let mut new_word;
-        let clean_char_set = self.char_set.clone().replace(" ", "");
-        let clean_char_set: Vec<char> = clean_char_set.chars().collect();
+        let clean_char_set: Vec<char> = self.keys.clone().replace(" ", "").chars().collect();
 
         for _ in 0..amount {
-            new_word = "".to_owned();
-            for _ in 1..rng.gen_range(3..=7) {
-                new_word.push(clean_char_set[rng.gen_range(0..clean_char_set.len())]);
+            let mut new_word: String = "".to_owned();
+            let max_length: u32 = rng.gen_range(3..=7);
+
+            for _ in 1..max_length {
+                let index = rng.gen_range(0..clean_char_set.len()) as usize;
+                new_word.push(clean_char_set[index]);
             }
-            self.generated_buffer.push(new_word.to_string());
+            self.words_buffer.push(new_word.to_string());
         }
     }
 
-    fn update_input_buffer(&mut self, input_state: &Vec<Vec<InputKey>>) {
-        for row in input_state {
+    fn update_input_buffer(&mut self, keyboard: &KeyboardState) {
+        for row in &keyboard.rows {
             for key in row {
                 if key.pressed {
-                    self.input_buffer.push(key.character);
+                    self.input_buffer.push(key.character); // FIXME: just going through keys is not always correct
                 }
                 if key.key == egui::Key::Space && key.pressed {
                     self.input_buffer.clear();
@@ -81,11 +76,41 @@ impl TextContainer {
     }
 
     fn try_increment(&mut self) {
-        if self.current_index + 1 >= self.generated_buffer.len() {
+        if self.current_index + 1 >= self.words_buffer.len() {
             self.generate_words(32);
         } else {
             self.current_index += 1;
         }
+    }
+}
+
+pub struct KeyboardState {
+    rows: Vec<Vec<InputKey>>,
+}
+
+impl KeyboardState {
+    fn new(keys: &str) -> Self {
+        let mut keyboard = KeyboardState { rows: Vec::new() };
+
+        for row in keys.split_whitespace() {
+            let mut input_row = Vec::new();
+            for c in row.chars() {
+                let key = char_to_key(c);
+                input_row.push(InputKey::new(c, key, false));
+            }
+            keyboard.rows.push(input_row);
+        }
+
+        // Add space bar as last input row
+        let mut space_bar: Vec<InputKey> = Vec::new();
+        space_bar.push(InputKey::new(
+            ' ',
+            egui::Key::Space,
+            false
+        ));
+        keyboard.rows.push(space_bar);
+
+        return keyboard;
     }
 }
 
@@ -127,26 +152,44 @@ impl Default for StyleConfig {
 }
 
 pub struct TypingPanel {
-    text_container: TextContainer,
-    style_config: StyleConfig,
+    text: TextContainer,
+    style: StyleConfig,
+    keyboard: KeyboardState,
     title: String,
     align: Align2,
-    enabled: bool,
+    enabled: bool, // FIXME: make an enum instead
 }
 
 impl TypingPanel {
-    fn update_and_draw(&mut self, ctx: &CtxRef) {
+    fn new(keys: &str) -> Self {
+        TypingPanel {
+                text: TextContainer::new(keys),
+                style: Default::default(),
+                keyboard: KeyboardState::new(keys),
+                title: "left_panel".to_string(),
+                align: Align2::LEFT_CENTER,
+                enabled: true,
+        }
+    }
+
+    fn update(&mut self, ctx: &Context) {
         if !self.enabled {
             return;
         }
 
-        let input_state = App::update_key_state(ctx, &self.text_container.char_set);
-
-        self.text_container.update_input_buffer(&input_state);
-        self.draw(ctx, &input_state);
+        self.update_keyboard_state(&ctx.input());
+        self.text.update_input_buffer(&self.keyboard);
     }
 
-    fn draw(&self, ctx: &CtxRef, input_state: &Vec<Vec<InputKey>>) {
+    fn update_keyboard_state(&mut self, input: &InputState) {
+        for row in &mut self.keyboard.rows {
+            for key in row {
+                key.pressed = input.key_pressed(key.key);
+            }
+        }
+    }
+
+    fn draw(&mut self, ctx: &Context) {
         egui::Window::new(&self.title)
             .resizable(false)
             .title_bar(false)
@@ -164,19 +207,19 @@ impl TypingPanel {
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text_container
+                                    self.text
                                         .get_last_word()
                                         .unwrap_or(&"".to_owned()),
                                 )),
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
-                                egui::Label::new(RichText::from(&self.text_container.input_buffer)),
+                                egui::Label::new(RichText::from(&self.text.input_buffer)),
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text_container
+                                    self.text
                                         .get_next_word()
                                         .unwrap_or(&"".to_owned()),
                                 )),
@@ -184,7 +227,7 @@ impl TypingPanel {
                         });
                     });
                 ui.add_space(120.);
-                App::draw_keys(&self.style_config, ui, &input_state);
+                App::draw_keys(&self.style, ui, &mut self.keyboard);
                 ui.add_space(50.);
             });
     }
@@ -202,7 +245,6 @@ impl ApplicationConfig {
     }
 }
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "persistence", serde(default))] // if we add new fields, give them default values when deserializing old state
 pub struct App {
@@ -214,29 +256,14 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
+        const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
+        const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
+
         Self {
             config: ApplicationConfig::new(),
             exit_requested: false,
-            left_panel: TypingPanel {
-                text_container: TextContainer {
-                    char_set: LEFT_QWERTY_KEYS.to_string(),
-                    ..Default::default()
-                },
-                style_config: Default::default(),
-                title: "left_panel".to_string(),
-                align: Align2::LEFT_CENTER,
-                enabled: true,
-            },
-            right_panel: TypingPanel {
-                text_container: TextContainer {
-                    char_set: RIGHT_QWERTY_KEYS.to_string(),
-                    ..Default::default()
-                },
-                style_config: Default::default(),
-                title: "right_panel".to_string(),
-                align: Align2::RIGHT_CENTER,
-                enabled: true,
-            },
+            left_panel: TypingPanel::new(LEFT_QWERTY_KEYS),
+            right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS),
         }
     }
 }
@@ -246,35 +273,12 @@ impl App {
         self.exit_requested = true;
     }
 
-    pub fn update_key_state(ctx: &CtxRef, keys: &str) -> Vec<Vec<InputKey>> {
-        let mut input_state: Vec<Vec<InputKey>> = Vec::new();
-        for row in keys.split_whitespace() {
-            let mut input_row = Vec::new();
-            for c in row.chars() {
-                let key = char_to_key(c);
-                input_row.push(InputKey::new(c, key, ctx.input().key_pressed(key)));
-            }
-            input_state.push(input_row);
-        }
-
-        // Add space bar as last input row
-        let mut space_bar: Vec<InputKey> = Vec::new();
-        space_bar.push(InputKey::new(
-            ' ',
-            egui::Key::Space,
-            ctx.input().key_pressed(egui::Key::Space),
-        ));
-        input_state.push(space_bar);
-
-        return input_state;
-    }
-
-    fn draw_keys(style_config: &StyleConfig, ui: &mut Ui, input_state: &Vec<Vec<InputKey>>) {
+    fn draw_keys(style_config: &StyleConfig, ui: &mut Ui, keyboard: &KeyboardState) {
         let button_size = style_config.button_size;
         ui.spacing_mut().item_spacing = style_config.button_spacing;
 
         let mut current_row_indent = 0.;
-        for row in input_state {
+        for row in &keyboard.rows {
             ui.horizontal(|ui| {
                 ui.add_space(current_row_indent);
                 for key in row {
@@ -291,8 +295,8 @@ impl App {
         }
     }
 
-    fn draw_about_window(ctx: &CtxRef) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn draw_about_window(ctx: &Context) {
+        CentralPanel::default().show(ctx, |ui| {
             egui::Area::new("about_area")
                 .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
                 .show(ctx, |ui| {
@@ -317,7 +321,7 @@ impl App {
         });
     }
 
-    fn draw_top_bar(&mut self, ctx: &CtxRef, frame: &epi::Frame) {
+    fn draw_top_bar(&mut self, ctx: &Context, frame: &mut Frame) {
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
             let mut resize_requested = false;
 
@@ -349,13 +353,16 @@ impl App {
     }
 }
 
-impl epi::App for App {
-    fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
+impl eframe::App for App {
+    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         self.draw_top_bar(ctx, frame);
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.left_panel.update_and_draw(ctx);
-            self.right_panel.update_and_draw(ctx);
+        CentralPanel::default().show(ctx, |_ui| {
+            self.left_panel.update(ctx);
+            self.right_panel.update(ctx);
+
+            self.left_panel.draw(ctx);
+            self.right_panel.draw(ctx);
 
             if !self.left_panel.enabled && !self.right_panel.enabled {
                 App::draw_about_window(ctx);
@@ -368,47 +375,43 @@ impl epi::App for App {
     }
 
     /// Called once before the first frame.
-    fn setup(
-        &mut self,
-        _ctx: &egui::CtxRef,
-        _frame: &epi::Frame,
-        _storage: Option<&dyn epi::Storage>,
-    ) {
-        // Load previous app state (if any).
-        #[cfg(feature = "persistence")]
-        if let Some(storage) = _storage {
-            *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
-        }
+    // fn setup(
+    //     &mut self,
+    //     _ctx: &egui::CtxRef,
+    //     _frame: &epi::Frame,
+    //     _storage: Option<&dyn epi::Storage>,
+    // ) {
+    //     // Load previous app state (if any).
+    //     #[cfg(feature = "persistence")]
+    //     if let Some(storage) = _storage {
+    //         *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+    //     }
 
-        let app_style = Style {
-            body_text_style: TextStyle::Small,
-            override_text_style: None,
-            wrap: None,
-            spacing: Default::default(),
-            interaction: Default::default(),
-            visuals: Visuals {
-                window_corner_radius: 0.0,
-                window_shadow: self.config.style.window_shadow,
-                ..Default::default()
-            },
-            animation_time: 0.0,
-            debug: Default::default(),
-            explanation_tooltips: false,
-        };
+    //     let app_style = Style {
+    //         body_text_style: TextStyle::Small,
+    //         override_text_style: None,
+    //         wrap: None,
+    //         spacing: Default::default(),
+    //         interaction: Default::default(),
+    //         visuals: Visuals {
+    //             window_corner_radius: 0.0,
+    //             window_shadow: self.config.style.window_shadow,
+    //             ..Default::default()
+    //         },
+    //         animation_time: 0.0,
+    //         debug: Default::default(),
+    //         explanation_tooltips: false,
+    //     };
 
-        _ctx.set_style(Arc::new(app_style));
-        self.right_panel.text_container.generate_words(10);
-        self.left_panel.text_container.generate_words(10);
-    }
+    //     _ctx.set_style(Arc::new(app_style));
+    //     self.right_panel.text_container.generate_words(10);
+    //     self.left_panel.text_container.generate_words(10);
+    // }
 
     /// Saves the state before shutdown.
     #[cfg(feature = "persistence")]
     fn save(&mut self, storage: &mut dyn epi::Storage) {
         epi::set_value(storage, epi::APP_KEY, self);
-    }
-
-    fn name(&self) -> &str {
-        "HemiTyper"
     }
 }
 
