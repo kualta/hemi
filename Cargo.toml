@@ -1,12 +1,8 @@
 [package]
 name = "HemiTyper"
 version = "1.0.0"
-authors = ["lectroMathew <contact@lectro.moe>"]
+authors = ["lectromoe <contact@lectro.moe>"]
 edition = "2021"
-rust-version = "1.56"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 eframe = "0.16.0"

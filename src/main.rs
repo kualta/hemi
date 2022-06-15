@@ -2,11 +2,13 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
 #![warn(clippy::all, rust_2018_idioms)]
 
+mod app;
+use app::App;
 use eframe::egui::Vec2;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    let app = HemiTyper::App::default();
+    let app = App::default();
 
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(Vec2::new(1000.0, 800.0)),
