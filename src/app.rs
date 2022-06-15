@@ -1,20 +1,16 @@
-use std::alloc::Layout;
-use std::collections::hash_map::IntoKeys;
+use eframe::egui::epaint::Shadow;
+use eframe::egui::{
+    Align, Align2, Button, Color32, CtxRef, RichText, Stroke,
+    Style, TextStyle, Ui, Vec2, Visuals,
+};
+use eframe::{egui, epi};
+use rand::Rng;
+use std::default::Default;
 use std::sync::Arc;
 use std::vec::Vec;
-use std::default::Default;
-use std::ops::Div;
-use eframe::{egui, epi};
-use eframe::egui::{Align, Align2, Button, CentralPanel, Color32, Context, CtxRef, Pos2, Rgba, RichText, Stroke, Style, TextStyle, Ui, Vec2, Visuals, Window};
-use eframe::egui::epaint::Shadow;
-use eframe::egui::Event::Key;
-use eframe::egui::WidgetType::ColorButton;
-use eframe::epi::Frame;
-use rand::Rng;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
-const QWERTY_KEYS: &str = "QWERTYUIOP ASDFGHJKL\' ZXCVBNM,./";
 
 pub struct TextContainer {
     char_set: String,
@@ -31,7 +27,7 @@ impl Default for TextContainer {
             input_buffer: "".to_owned(),
             generated_buffer: Default::default(),
             current_index: 0,
-            max_buffered_chars: 10
+            max_buffered_chars: 10,
         }
     }
 }
@@ -41,25 +37,25 @@ impl TextContainer {
         if self.current_index == 0 {
             return None;
         }
-        return Some(&self.generated_buffer[self.current_index])
+        return Some(&self.generated_buffer[self.current_index]);
     }
 
     fn get_next_word(&self) -> Option<&String> {
         if self.current_index + 1 >= self.generated_buffer.len() {
             return None;
         }
-        return Some(&self.generated_buffer[self.current_index + 1])
+        return Some(&self.generated_buffer[self.current_index + 1]);
     }
 
     fn generate_words(&mut self, amount: u32) {
         let mut rng = rand::thread_rng();
-        let mut new_word = "".to_owned();
-        let mut clean_char_set = self.char_set.clone().replace(" ", "");
-        let mut clean_char_set: Vec<char> = clean_char_set.chars().collect();
+        let mut new_word;
+        let clean_char_set = self.char_set.clone().replace(" ", "");
+        let clean_char_set: Vec<char> = clean_char_set.chars().collect();
 
         for _ in 0..amount {
             new_word = "".to_owned();
-            for _ in 1..rng.gen_range(3 ..= 7) {
+            for _ in 1..rng.gen_range(3..=7) {
                 new_word.push(clean_char_set[rng.gen_range(0..clean_char_set.len())]);
             }
             self.generated_buffer.push(new_word.to_string());
@@ -72,7 +68,7 @@ impl TextContainer {
                 if key.pressed {
                     self.input_buffer.push(key.character);
                 }
-                if key.key == egui::Key::Space && key.pressed{
+                if key.key == egui::Key::Space && key.pressed {
                     self.input_buffer.clear();
                     self.try_increment();
                 }
@@ -124,8 +120,8 @@ impl Default for StyleConfig {
             button_spacing: Vec2::new(10., 10.),
             window_shadow: Shadow {
                 extrusion: 0.,
-                color: Color32::BLACK
-            }
+                color: Color32::BLACK,
+            },
         }
     }
 }
@@ -140,7 +136,9 @@ pub struct TypingPanel {
 
 impl TypingPanel {
     fn update_and_draw(&mut self, ctx: &CtxRef) {
-        if !self.enabled { return; }
+        if !self.enabled {
+            return;
+        }
 
         let input_state = App::update_key_state(ctx, &self.text_container.char_set);
 
@@ -158,23 +156,31 @@ impl TypingPanel {
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top(&self.title)
                     .resizable(false)
-                    .height_range(250. ..= 250.)
+                    .height_range(250. ..=250.)
                     .show_inside(ui, |ui| {
                         ui.add_space(125.);
                         ui.horizontal(|ui| {
                             ui.add_space(75.);
-                            ui.add_sized(Vec2::new(100., 30.), egui::Label::new(
-                                RichText::from(self.text_container
-                                .get_last_word()
-                                .unwrap_or(&"".to_owned())
-                                )));
-                            ui.add_sized(Vec2::new(100., 30.), egui::Label::new(
-                                RichText::from(&self.text_container.input_buffer)));
-                            ui.add_sized(Vec2::new(100., 30.),egui::Label::new(
-                                RichText::from(self.text_container
-                                .get_next_word()
-                                .unwrap_or(&"".to_owned())
-                                )));
+                            ui.add_sized(
+                                Vec2::new(100., 30.),
+                                egui::Label::new(RichText::from(
+                                    self.text_container
+                                        .get_last_word()
+                                        .unwrap_or(&"".to_owned()),
+                                )),
+                            );
+                            ui.add_sized(
+                                Vec2::new(100., 30.),
+                                egui::Label::new(RichText::from(&self.text_container.input_buffer)),
+                            );
+                            ui.add_sized(
+                                Vec2::new(100., 30.),
+                                egui::Label::new(RichText::from(
+                                    self.text_container
+                                        .get_next_word()
+                                        .unwrap_or(&"".to_owned()),
+                                )),
+                            );
                         });
                     });
                 ui.add_space(120.);
@@ -219,7 +225,7 @@ impl Default for App {
                 style_config: Default::default(),
                 title: "left_panel".to_string(),
                 align: Align2::LEFT_CENTER,
-                enabled: true
+                enabled: true,
             },
             right_panel: TypingPanel {
                 text_container: TextContainer {
@@ -229,7 +235,7 @@ impl Default for App {
                 style_config: Default::default(),
                 title: "right_panel".to_string(),
                 align: Align2::RIGHT_CENTER,
-                enabled: true
+                enabled: true,
             },
         }
     }
@@ -253,11 +259,14 @@ impl App {
 
         // Add space bar as last input row
         let mut space_bar: Vec<InputKey> = Vec::new();
-        space_bar.push(InputKey::new(' ', egui::Key::Space,
-                                     ctx.input().key_pressed(egui::Key::Space)));
+        space_bar.push(InputKey::new(
+            ' ',
+            egui::Key::Space,
+            ctx.input().key_pressed(egui::Key::Space),
+        ));
         input_state.push(space_bar);
 
-        return input_state
+        return input_state;
     }
 
     fn draw_keys(style_config: &StyleConfig, ui: &mut Ui, input_state: &Vec<Vec<InputKey>>) {
@@ -270,37 +279,41 @@ impl App {
                 ui.add_space(current_row_indent);
                 for key in row {
                     let width_mul = if key.key == egui::Key::Space { 4.6 } else { 1. };
-                    ui.add_sized(Vec2::new(button_size * width_mul, button_size), Button::new(key.character.to_string())
-
+                    ui.add_sized(
+                        Vec2::new(button_size * width_mul, button_size),
+                        Button::new(key.character.to_string())
                             //                   converting bool to either 0. or 1.
-                            .stroke(Stroke::new(key.pressed as i32 as f32, Color32::WHITE))
+                            .stroke(Stroke::new(key.pressed as i32 as f32, Color32::WHITE)),
                     );
                 }
             });
             current_row_indent += style_config.button_indent;
-        };
+        }
     }
 
     fn draw_about_window(ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
-                egui::Area::new("about_area")
-                    .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
-                    .show(ctx, |ui| {
-                        ui.spacing_mut().item_spacing.x = 0.0;
-                        ui.horizontal(|ui| {
-                            egui::Layout::top_down_justified(Align::Center);
-                            ui.label("made by ");
-                            ui.hyperlink_to("lectroMathew", "https://github.com/lectroMathew");
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("powered by ");
-                            ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                            ui.label(" and ");
-                            ui.hyperlink_to("eframe", "https://github.com/emilk/egui/tree/master/eframe");
-                        });
-                        ui.add_space(4.);
-                        egui::warn_if_debug_build(ui);
+            egui::Area::new("about_area")
+                .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
+                .show(ctx, |ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.horizontal(|ui| {
+                        egui::Layout::top_down_justified(Align::Center);
+                        ui.label("made by ");
+                        ui.hyperlink_to("lectroMathew", "https://github.com/lectroMathew");
                     });
+                    ui.horizontal(|ui| {
+                        ui.label("powered by ");
+                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label(" and ");
+                        ui.hyperlink_to(
+                            "eframe",
+                            "https://github.com/emilk/egui/tree/master/eframe",
+                        );
+                    });
+                    ui.add_space(4.);
+                    egui::warn_if_debug_build(ui);
+                });
         });
     }
 
@@ -309,10 +322,16 @@ impl App {
             let mut resize_requested = false;
 
             ui.horizontal(|ui| {
-                if ui.checkbox(&mut self.left_panel.enabled, "Left panel").changed() {
+                if ui
+                    .checkbox(&mut self.left_panel.enabled, "Left panel")
+                    .changed()
+                {
                     resize_requested = true;
                 }
-                if ui.checkbox(&mut self.right_panel.enabled, "Right panel").changed() {
+                if ui
+                    .checkbox(&mut self.right_panel.enabled, "Right panel")
+                    .changed()
+                {
                     resize_requested = true;
                 }
             });
@@ -332,11 +351,9 @@ impl App {
 
 impl epi::App for App {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
-
         self.draw_top_bar(ctx, frame);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-
             self.left_panel.update_and_draw(ctx);
             self.right_panel.update_and_draw(ctx);
 
@@ -345,7 +362,9 @@ impl epi::App for App {
             }
         });
 
-        if self.exit_requested { frame.quit() };
+        if self.exit_requested {
+            frame.quit()
+        };
     }
 
     /// Called once before the first frame.
@@ -374,7 +393,7 @@ impl epi::App for App {
             },
             animation_time: 0.0,
             debug: Default::default(),
-            explanation_tooltips: false
+            explanation_tooltips: false,
         };
 
         _ctx.set_style(Arc::new(app_style));
@@ -424,7 +443,6 @@ fn char_to_key(c: char) -> egui::Key {
         ' ' => egui::Key::Space,
         // ';' => egui::Key::Semicolon,
         // TODO: Add special characters handling when egui adds support for them ¯\_(ツ)_/¯
-        _ => egui::Key::Escape
+        _ => egui::Key::Escape,
     }
 }
-

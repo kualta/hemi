@@ -1,6 +1,6 @@
 [package]
-name = "HemiTyper"
-version = "1.0.0"
+name = "hemi_typer"
+version = "0.2.0"
 authors = ["lectromoe <contact@lectro.moe>"]
 edition = "2021"
 
@@ -15,8 +15,3 @@ persistence = ["eframe/persistence", "serde"]
 
 [profile.release]
 opt-level = 2
-
-[patch.crates-io]
-
-# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
-# eframe = { path = "../egui/eframe" }
