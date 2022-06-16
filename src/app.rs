@@ -1,11 +1,13 @@
-use eframe::egui::{self, CentralPanel};
+use eframe::egui::{self, CentralPanel, Style, Visuals};
 use eframe::egui::epaint::Shadow;
 use eframe::egui::{
     Align, Align2, Button, Color32, Context, InputState, RichText, Stroke, Ui, Vec2,
 };
 use eframe::Frame;
+use eframe::epaint::Rounding;
 use rand::Rng;
 use std::default::Default;
+use std::sync::Arc;
 use std::vec::Vec;
 
 pub struct TextContainer {
@@ -259,20 +261,21 @@ impl Default for App {
         const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
         const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 
-        Self {
+        let mut app = App {
             config: ApplicationConfig::new(),
             exit_requested: false,
             left_panel: TypingPanel::new(LEFT_QWERTY_KEYS),
             right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS),
-        }
+        };
+
+        app.right_panel.text.generate_words(10); // FIXME: Move to TypingPanel constructor
+        app.left_panel.text.generate_words(10);
+
+        app
     }
 }
 
 impl App {
-    pub fn exit(&mut self) {
-        self.exit_requested = true;
-    }
-
     fn draw_keys(style_config: &StyleConfig, ui: &mut Ui, keyboard: &KeyboardState) {
         let button_size = style_config.button_size;
         ui.spacing_mut().item_spacing = style_config.button_spacing;
@@ -368,50 +371,42 @@ impl eframe::App for App {
                 App::draw_about_window(ctx);
             }
         });
-
-        if self.exit_requested {
-            frame.quit()
-        };
     }
 
-    /// Called once before the first frame.
-    // fn setup(
-    //     &mut self,
-    //     _ctx: &egui::CtxRef,
-    //     _frame: &epi::Frame,
-    //     _storage: Option<&dyn epi::Storage>,
-    // ) {
-    //     // Load previous app state (if any).
-    //     #[cfg(feature = "persistence")]
-    //     if let Some(storage) = _storage {
-    //         *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
-    //     }
-
-    //     let app_style = Style {
-    //         body_text_style: TextStyle::Small,
-    //         override_text_style: None,
-    //         wrap: None,
-    //         spacing: Default::default(),
-    //         interaction: Default::default(),
-    //         visuals: Visuals {
-    //             window_corner_radius: 0.0,
-    //             window_shadow: self.config.style.window_shadow,
-    //             ..Default::default()
-    //         },
-    //         animation_time: 0.0,
-    //         debug: Default::default(),
-    //         explanation_tooltips: false,
-    //     };
-
-    //     _ctx.set_style(Arc::new(app_style));
-    //     self.right_panel.text_container.generate_words(10);
-    //     self.left_panel.text_container.generate_words(10);
-    // }
-
-    /// Saves the state before shutdown.
     #[cfg(feature = "persistence")]
     fn save(&mut self, storage: &mut dyn epi::Storage) {
         epi::set_value(storage, epi::APP_KEY, self);
+    }
+
+    fn on_exit_event(&mut self) -> bool {
+        true
+    }
+
+    fn on_exit(&mut self, _gl: &eframe::glow::Context) {}
+
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(30)
+    }
+
+    fn clear_color(&self, _visuals: &egui::Visuals) -> egui::Rgba {
+        // NOTE: a bright gray makes the shadows of the windows look weird.
+        // We use a bit of transparency so that if the user switches on the
+        // `transparent()` option they get immediate results.
+        egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).into()
+
+        // _visuals.window_fill() would also be a natural choice
+    }
+
+    fn persist_native_window(&self) -> bool {
+        true
+    }
+
+    fn persist_egui_memory(&self) -> bool {
+        true
+    }
+
+    fn warm_up_enabled(&self) -> bool {
+        false
     }
 }
 
