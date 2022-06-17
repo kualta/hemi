@@ -100,13 +100,13 @@ pub struct TypingPanel {
 }
 
 impl TypingPanel {
-    fn new(keys: &str) -> Self {
+    fn new(keys: &str, align: Align2) -> Self {
         TypingPanel {
             text: TextContainer::new(keys, 10),
             style: Default::default(),
             keyboard: KeyboardState::new(keys),
-            title: "left_panel".to_string(),
-            align: Align2::LEFT_CENTER,
+            title: keys.to_string() + " panel",
+            align,
             enabled: true,
         }
     }
@@ -183,8 +183,8 @@ impl Default for App {
 
         let mut app = App {
             config: ApplicationConfig::new(),
-            left_panel: TypingPanel::new(LEFT_QWERTY_KEYS),
-            right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS),
+            left_panel: TypingPanel::new(LEFT_QWERTY_KEYS, Align2::LEFT_CENTER),
+            right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS, Align2::RIGHT_CENTER),
         };
 
         app
@@ -280,8 +280,8 @@ impl eframe::App for App {
             self.left_panel.update(ctx);
             self.right_panel.update(ctx);
 
-            self.left_panel.draw(ctx);
             self.right_panel.draw(ctx);
+            self.left_panel.draw(ctx);
 
             if !self.left_panel.enabled && !self.right_panel.enabled {
                 App::draw_about_window(ctx);
@@ -293,12 +293,6 @@ impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn epi::Storage) {
         epi::set_value(storage, epi::APP_KEY, self);
     }
-
-    fn on_exit_event(&mut self) -> bool {
-        true
-    }
-
-    fn on_exit(&mut self, _gl: &eframe::glow::Context) {}
 
     fn auto_save_interval(&self) -> std::time::Duration {
         std::time::Duration::from_secs(30)
@@ -314,11 +308,11 @@ impl eframe::App for App {
     }
 
     fn persist_native_window(&self) -> bool {
-        true
+        false
     }
 
     fn persist_egui_memory(&self) -> bool {
-        true
+        false
     }
 
     fn warm_up_enabled(&self) -> bool {

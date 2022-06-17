@@ -39,7 +39,7 @@ impl ApplicationConfig {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-
+    use eframe::epaint::Shadow;
 
     let app = App::default();
 
@@ -65,6 +65,7 @@ fn main() {
                 interaction: Default::default(),
                 visuals: Visuals {
                     window_rounding: Rounding { nw: 0., ne: 0., sw: 0., se: 0. },
+                    window_shadow: Shadow { extrusion: 0., color: Default::default() },
                     ..Default::default()
                 },
                 ..Default::default()
