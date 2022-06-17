@@ -1,14 +1,14 @@
 use eframe::egui::{self, CentralPanel, Style, Visuals};
-use eframe::egui::epaint::Shadow;
 use eframe::egui::{
     Align, Align2, Button, Color32, Context, InputState, RichText, Stroke, Ui, Vec2,
 };
 use eframe::Frame;
-use eframe::epaint::Rounding;
 use rand::Rng;
 use std::default::Default;
-use std::sync::Arc;
 use std::vec::Vec;
+
+use crate::keyboard::{KeyboardState, InputKey};
+use crate::{ApplicationConfig, StyleConfig};
 
 pub struct TextContainer {
     keys: String,
@@ -19,14 +19,17 @@ pub struct TextContainer {
 }
 
 impl TextContainer {
-    fn new(keys: &str) -> TextContainer {
-        TextContainer {
+    fn new(keys: &str, words_amount: u32) -> TextContainer {
+        let mut container = TextContainer {
             input_buffer: "".to_owned(),
             words_buffer: Default::default(),
             current_index: 0,
             max_buffered_chars: 10,
             keys: keys.to_owned(),
-        }
+        };
+        container.generate_words(words_amount);
+
+        container
     }
 
     fn get_last_word(&self) -> Option<&String> {
@@ -86,72 +89,6 @@ impl TextContainer {
     }
 }
 
-pub struct KeyboardState {
-    rows: Vec<Vec<InputKey>>,
-}
-
-impl KeyboardState {
-    fn new(keys: &str) -> Self {
-        let mut keyboard = KeyboardState { rows: Vec::new() };
-
-        for row in keys.split_whitespace() {
-            let mut input_row = Vec::new();
-            for c in row.chars() {
-                let key = char_to_key(c);
-                input_row.push(InputKey::new(c, key, false));
-            }
-            keyboard.rows.push(input_row);
-        }
-
-        // Add space bar as last input row
-        let mut space_bar: Vec<InputKey> = Vec::new();
-        space_bar.push(InputKey::new(
-            ' ',
-            egui::Key::Space,
-            false
-        ));
-        keyboard.rows.push(space_bar);
-
-        return keyboard;
-    }
-}
-
-pub struct InputKey {
-    character: char,
-    key: egui::Key,
-    pressed: bool,
-}
-
-impl InputKey {
-    fn new(character: char, key: egui::Key, pressed: bool) -> Self {
-        InputKey {
-            character,
-            key,
-            pressed,
-        }
-    }
-}
-
-pub struct StyleConfig {
-    button_size: f32,
-    button_indent: f32,
-    button_spacing: Vec2,
-    window_shadow: Shadow,
-}
-
-impl Default for StyleConfig {
-    fn default() -> Self {
-        StyleConfig {
-            button_size: 75.,
-            button_indent: 35.,
-            button_spacing: Vec2::new(10., 10.),
-            window_shadow: Shadow {
-                extrusion: 0.,
-                color: Color32::BLACK,
-            },
-        }
-    }
-}
 
 pub struct TypingPanel {
     text: TextContainer,
@@ -165,12 +102,12 @@ pub struct TypingPanel {
 impl TypingPanel {
     fn new(keys: &str) -> Self {
         TypingPanel {
-                text: TextContainer::new(keys),
-                style: Default::default(),
-                keyboard: KeyboardState::new(keys),
-                title: "left_panel".to_string(),
-                align: Align2::LEFT_CENTER,
-                enabled: true,
+            text: TextContainer::new(keys, 10),
+            style: Default::default(),
+            keyboard: KeyboardState::new(keys),
+            title: "left_panel".to_string(),
+            align: Align2::LEFT_CENTER,
+            enabled: true,
         }
     }
 
@@ -209,9 +146,7 @@ impl TypingPanel {
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text
-                                        .get_last_word()
-                                        .unwrap_or(&"".to_owned()),
+                                    self.text.get_last_word().unwrap_or(&"".to_owned()),
                                 )),
                             );
                             ui.add_sized(
@@ -221,9 +156,7 @@ impl TypingPanel {
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text
-                                        .get_next_word()
-                                        .unwrap_or(&"".to_owned()),
+                                    self.text.get_next_word().unwrap_or(&"".to_owned()),
                                 )),
                             );
                         });
@@ -235,23 +168,10 @@ impl TypingPanel {
     }
 }
 
-pub struct ApplicationConfig {
-    style: StyleConfig,
-}
-
-impl ApplicationConfig {
-    pub fn new() -> Self {
-        ApplicationConfig {
-            style: StyleConfig::default(),
-        }
-    }
-}
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "persistence", serde(default))] // if we add new fields, give them default values when deserializing old state
 pub struct App {
     pub config: ApplicationConfig,
-    exit_requested: bool,
     left_panel: TypingPanel,
     right_panel: TypingPanel,
 }
@@ -263,13 +183,9 @@ impl Default for App {
 
         let mut app = App {
             config: ApplicationConfig::new(),
-            exit_requested: false,
             left_panel: TypingPanel::new(LEFT_QWERTY_KEYS),
             right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS),
         };
-
-        app.right_panel.text.generate_words(10); // FIXME: Move to TypingPanel constructor
-        app.left_panel.text.generate_words(10);
 
         app
     }
@@ -410,37 +326,3 @@ impl eframe::App for App {
     }
 }
 
-fn char_to_key(c: char) -> egui::Key {
-    match c {
-        'A' => egui::Key::A,
-        'B' => egui::Key::B,
-        'C' => egui::Key::C,
-        'D' => egui::Key::D,
-        'E' => egui::Key::E,
-        'F' => egui::Key::F,
-        'G' => egui::Key::G,
-        'H' => egui::Key::H,
-        'I' => egui::Key::I,
-        'J' => egui::Key::J,
-        'K' => egui::Key::K,
-        'L' => egui::Key::L,
-        'M' => egui::Key::M,
-        'N' => egui::Key::N,
-        'O' => egui::Key::O,
-        'P' => egui::Key::P,
-        'Q' => egui::Key::Q,
-        'R' => egui::Key::R,
-        'S' => egui::Key::S,
-        'T' => egui::Key::T,
-        'U' => egui::Key::U,
-        'V' => egui::Key::V,
-        'W' => egui::Key::W,
-        'X' => egui::Key::X,
-        'Y' => egui::Key::Y,
-        'Z' => egui::Key::Z,
-        ' ' => egui::Key::Space,
-        // ';' => egui::Key::Semicolon,
-        // TODO: Add special characters handling when egui adds support for them ¯\_(ツ)_/¯
-        _ => egui::Key::Escape,
-    }
-}
