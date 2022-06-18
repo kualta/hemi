@@ -5,9 +5,10 @@ use eframe::egui::{
 use eframe::Frame;
 use rand::Rng;
 use std::default::Default;
+use std::ops::Not;
 use std::vec::Vec;
 
-use crate::keyboard::{KeyboardState, InputKey};
+use crate::keyboard::{InputKey, KeyboardState};
 use crate::{ApplicationConfig, StyleConfig};
 
 pub struct TextContainer {
@@ -89,6 +90,31 @@ impl TextContainer {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
+enum PanelState {
+    Enabled,
+    Disabled,
+}
+
+impl Into<bool> for PanelState {
+    fn into(self) -> bool {
+        match self {
+            PanelState::Enabled => true,
+            PanelState::Disabled => false
+        }  
+    }
+}
+
+impl Not for PanelState {
+    type Output = PanelState;
+
+    fn not(self) -> Self::Output {
+        match self {
+            PanelState::Enabled => PanelState::Disabled,
+            PanelState::Disabled => PanelState::Enabled
+        }
+    }
+}
 
 pub struct TypingPanel {
     text: TextContainer,
@@ -96,7 +122,7 @@ pub struct TypingPanel {
     keyboard: KeyboardState,
     title: String,
     align: Align2,
-    enabled: bool, // FIXME: make an enum instead
+    state: PanelState, 
 }
 
 impl TypingPanel {
@@ -106,16 +132,12 @@ impl TypingPanel {
             style: Default::default(),
             keyboard: KeyboardState::new(keys),
             title: keys.to_string() + " panel",
+            state: PanelState::Enabled,
             align,
-            enabled: true,
         }
     }
 
     fn update(&mut self, ctx: &Context) {
-        if !self.enabled {
-            return;
-        }
-
         self.update_keyboard_state(&ctx.input());
         self.text.update_input_buffer(&self.keyboard);
     }
@@ -123,7 +145,7 @@ impl TypingPanel {
     fn update_keyboard_state(&mut self, input: &InputState) {
         for row in &mut self.keyboard.rows {
             for key in row {
-                key.pressed = input.key_pressed(key.key);
+                key.pressed = input.key_down(key.key);
             }
         }
     }
@@ -214,7 +236,7 @@ impl App {
         }
     }
 
-    fn draw_about_window(ctx: &Context) {
+    fn draw_about_window(&mut self, ctx: &Context) {
         CentralPanel::default().show(ctx, |ui| {
             egui::Area::new("about_area")
                 .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
@@ -245,30 +267,29 @@ impl App {
             let mut resize_requested = false;
 
             ui.horizontal(|ui| {
-                if ui
-                    .checkbox(&mut self.left_panel.enabled, "Left panel")
-                    .changed()
-                {
-                    resize_requested = true;
+                if ui.checkbox(&mut self.left_panel.state.into(), "Left panel").changed() {
+                    self.left_panel.state = !self.left_panel.state;
+                    self.resize(frame);
                 }
                 if ui
-                    .checkbox(&mut self.right_panel.enabled, "Right panel")
+                    .checkbox(&mut self.right_panel.state.into(), "Right panel")
                     .changed()
                 {
-                    resize_requested = true;
+                    self.right_panel.state = !self.right_panel.state;
+                    self.resize(frame);
                 }
             });
-
-            if resize_requested {
-                let mut new_size = Vec2::new(500., 800.);
-
-                if self.right_panel.enabled && self.left_panel.enabled {
-                    new_size.x += 500.0;
-                }
-
-                frame.set_window_size(new_size);
-            }
         });
+    }
+
+    fn resize(&mut self, frame: &mut Frame) {
+        let mut new_size = Vec2::new(500., 800.);
+        if (self.right_panel.state == PanelState::Enabled)
+        && (self.left_panel.state == PanelState::Enabled)
+        {
+            new_size.x += 500.0;
+        }
+        frame.set_window_size(new_size);
     }
 }
 
@@ -277,14 +298,18 @@ impl eframe::App for App {
         self.draw_top_bar(ctx, frame);
 
         CentralPanel::default().show(ctx, |_ui| {
-            self.left_panel.update(ctx);
-            self.right_panel.update(ctx);
-
-            self.right_panel.draw(ctx);
-            self.left_panel.draw(ctx);
-
-            if !self.left_panel.enabled && !self.right_panel.enabled {
-                App::draw_about_window(ctx);
+            if self.left_panel.state == PanelState::Enabled {
+                self.left_panel.update(ctx);
+                self.left_panel.draw(ctx);
+            }
+            if self.left_panel.state == PanelState::Enabled {
+                self.right_panel.update(ctx);
+                self.right_panel.draw(ctx);
+            }
+            if self.left_panel.state == PanelState::Disabled
+            && self.right_panel.state == PanelState::Disabled
+            {
+                self.draw_about_window(ctx);
             }
         });
     }
@@ -308,15 +333,14 @@ impl eframe::App for App {
     }
 
     fn persist_native_window(&self) -> bool {
-        false
+        true
     }
 
     fn persist_egui_memory(&self) -> bool {
-        false
+        true
     }
 
     fn warm_up_enabled(&self) -> bool {
-        false
+        true
     }
 }
-
