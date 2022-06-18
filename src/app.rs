@@ -101,29 +101,78 @@ impl Not for PanelState {
     fn not(self) -> Self::Output {
         match self {
             PanelState::Enabled => PanelState::Disabled,
-            PanelState::Disabled => PanelState::Enabled
+            PanelState::Disabled => PanelState::Enabled,
         }
     }
 }
 
-pub struct TypingPanel {
-    text: TextContainer,
+trait Drawable {
+    fn draw(&mut self, ctx: &Context);
+}
+
+pub(crate) struct Panel {
     style: StyleConfig,
-    keyboard: KeyboardState,
     title: String,
-    align: Align2,
     state: PanelState,
 }
 
-impl TypingPanel {
-    fn new(keys: &str, align: Align2) -> Self {
-        TypingPanel {
-            text: TextContainer::new(keys, 10),
+impl Panel {
+    fn new(title: String, state: PanelState) -> Self {
+        Panel {
             style: Default::default(),
-            keyboard: KeyboardState::new(keys),
-            title: keys.to_string() + " panel",
-            state: PanelState::Enabled,
-            align,
+            title, 
+            state,
+        }
+    }
+}
+
+pub(crate) struct AboutPanel {
+    info: Panel
+}
+
+impl Default for AboutPanel {
+    fn default() -> Self {
+        Self { info: Panel::new("About panel".to_owned(), PanelState::Disabled) }
+    }
+}
+
+impl Drawable for AboutPanel {
+    fn draw(&mut self, ctx: &Context) {
+        CentralPanel::default().show(ctx, |ui| {
+            egui::Area::new("about_area")
+                .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
+                .show(ctx, |ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.horizontal(|ui| {
+                        egui::Layout::top_down_justified(Align::Center);
+                        ui.label("made by ");
+                        ui.hyperlink_to("lectro.moe", "https://lectro.moe/");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("powered by ");
+                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label(" and ");
+                        ui.hyperlink_to( "eframe", "https://github.com/emilk/egui/tree/master/eframe",);
+                    });
+                    ui.add_space(4.);
+                    egui::warn_if_debug_build(ui);
+                });
+        });
+    }
+}
+
+pub struct TypingPanel {
+    info: Panel,
+    text: TextContainer,
+    keyboard: KeyboardState,
+}
+
+impl TypingPanel {
+    fn new(keys: &str) -> Self {
+        TypingPanel {
+            info: Panel::new(keys.to_owned() + " panel", PanelState::Enabled),
+            text: TextContainer::new(keys, 10),
+            keyboard: KeyboardState::new(keys)
         }
     }
 
@@ -141,15 +190,18 @@ impl TypingPanel {
         }
     }
 
+}
+
+impl Drawable for TypingPanel {
     fn draw(&mut self, ctx: &Context) {
-        egui::Window::new(&self.title)
+        egui::Window::new(&self.info.title)
             .resizable(false)
             .title_bar(false)
             .collapsible(false)
-            .anchor(self.align, Vec2::new(0., 0.))
+            .anchor(Align2::CENTER_CENTER, Vec2::new(0., 0.))
             .min_height(800.)
             .show(ctx, |ui| {
-                egui::TopBottomPanel::top(&self.title)
+                egui::TopBottomPanel::top(&self.info.title)
                     .resizable(false)
                     .height_range(250. ..=250.)
                     .show_inside(ui, |ui| {
@@ -164,7 +216,8 @@ impl TypingPanel {
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
-                                egui::widgets::TextEdit::singleline(&mut self.text.input_buffer).cursor_at_end(true),
+                                egui::widgets::TextEdit::singleline(&mut self.text.input_buffer)
+                                    .cursor_at_end(true),
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
@@ -175,7 +228,7 @@ impl TypingPanel {
                         });
                     });
                 ui.add_space(120.);
-                App::draw_keys(&self.style, ui, &mut self.keyboard);
+                App::draw_keys(&self.info.style, ui, &mut self.keyboard);
                 ui.add_space(50.);
             });
     }
@@ -187,6 +240,7 @@ pub struct App {
     pub config: ApplicationConfig,
     left_panel: TypingPanel,
     right_panel: TypingPanel,
+    about_panel: AboutPanel
 }
 
 impl Default for App {
@@ -196,9 +250,11 @@ impl Default for App {
 
         let mut app = App {
             config: ApplicationConfig::new(),
-            left_panel: TypingPanel::new(LEFT_QWERTY_KEYS, Align2::LEFT_CENTER),
-            right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS, Align2::RIGHT_CENTER),
+            left_panel: TypingPanel::new(LEFT_QWERTY_KEYS),
+            right_panel: TypingPanel::new(RIGHT_QWERTY_KEYS),
+            about_panel: AboutPanel::default()
         };
+        app.right_panel.info.state = PanelState::Disabled;
 
         app
     }
@@ -227,63 +283,22 @@ impl App {
         }
     }
 
-    fn draw_about_window(&mut self, ctx: &Context) {
-        CentralPanel::default().show(ctx, |ui| {
-            egui::Area::new("about_area")
-                .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
-                .show(ctx, |ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.horizontal(|ui| {
-                        egui::Layout::top_down_justified(Align::Center);
-                        ui.label("made by ");
-                        ui.hyperlink_to("lectroMathew", "https://github.com/lectroMathew");
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("powered by ");
-                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                        ui.label(" and ");
-                        ui.hyperlink_to(
-                            "eframe",
-                            "https://github.com/emilk/egui/tree/master/eframe",
-                        );
-                    });
-                    ui.add_space(4.);
-                    egui::warn_if_debug_build(ui);
-                });
-        });
-    }
-
     fn draw_top_bar(&mut self, ctx: &Context, frame: &mut Frame) {
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
-            let mut resize_requested = false;
-
             ui.horizontal(|ui| {
                 if ui
-                    .checkbox(&mut self.left_panel.state.into(), "Left panel")
-                    .changed()
+                    .button("Switch side")
+                    .clicked()
                 {
-                    self.left_panel.state = !self.left_panel.state;
-                    self.resize(frame);
+                    self.about_panel.info.state = PanelState::Disabled;
+                    self.left_panel.info.state = !self.left_panel.info.state;
+                    self.right_panel.info.state = !self.right_panel.info.state;
                 }
-                if ui
-                    .checkbox(&mut self.right_panel.state.into(), "Right panel")
-                    .changed()
-                {
-                    self.right_panel.state = !self.right_panel.state;
-                    self.resize(frame);
+                if ui.button("About").clicked() {
+                    self.about_panel.info.state = !self.about_panel.info.state;
                 }
             });
         });
-    }
-
-    fn resize(&mut self, frame: &mut Frame) {
-        let mut new_size = Vec2::new(500., 800.);
-        if (self.right_panel.state == PanelState::Enabled)
-            && (self.left_panel.state == PanelState::Enabled)
-        {
-            new_size.x += 500.0;
-        }
-        frame.set_window_size(new_size);
     }
 }
 
@@ -292,19 +307,17 @@ impl eframe::App for App {
         self.draw_top_bar(ctx, frame);
 
         CentralPanel::default().show(ctx, |_ui| {
-            if self.left_panel.state == PanelState::Enabled {
+            if self.about_panel.info.state == PanelState::Enabled {
+                self.about_panel.draw(ctx);
+                return;
+            }
+            if self.left_panel.info.state == PanelState::Enabled {
                 self.left_panel.update(ctx);
                 self.left_panel.draw(ctx);
-            }
-            if self.left_panel.state == PanelState::Enabled {
+            } else if self.right_panel.info.state == PanelState::Enabled {
                 self.right_panel.update(ctx);
                 self.right_panel.draw(ctx);
-            }
-            if self.left_panel.state == PanelState::Disabled
-                && self.right_panel.state == PanelState::Disabled
-            {
-                self.draw_about_window(ctx);
-            }
+            }         
         });
     }
 

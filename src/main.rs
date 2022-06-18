@@ -44,7 +44,7 @@ fn main() {
     let app = App::default();
 
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some(Vec2::new(1000.0, 800.0)),
+        initial_window_size: Some(Vec2::new(500.0, 800.0)),
         resizable: false,
         ..Default::default()
     };
