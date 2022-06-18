@@ -5,6 +5,7 @@
 
 mod app;
 mod keyboard;
+mod components;
 use app::App;
 use eframe::egui::Vec2;
 use eframe::{egui::{Style, Visuals}, epaint::Rounding};

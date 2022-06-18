@@ -1,6 +1,6 @@
 use eframe::egui;
 
-pub(crate) struct KeyboardState {
+pub struct KeyboardState {
     pub(crate) rows: Vec<Vec<InputKey>>,
 }
 
