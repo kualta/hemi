@@ -29,6 +29,7 @@ pub(crate) struct InputKey {
     pub(crate) character: char,
     pub(crate) key: egui::Key,
     pub(crate) pressed: bool,
+    pub(crate) down: bool,
 }
 
 impl InputKey {
@@ -37,6 +38,7 @@ impl InputKey {
             character,
             key,
             pressed,
+            down: pressed,
         }
     }
 }
@@ -79,7 +81,8 @@ impl From<char> for InputKey {
         InputKey {
             character,
             key,
-            pressed: false,
+            down: false,
+            pressed: false
         }
     }
 }

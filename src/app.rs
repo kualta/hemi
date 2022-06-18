@@ -64,20 +64,10 @@ impl TextContainer {
     }
 
     fn update_input_buffer(&mut self, keyboard: &KeyboardState) {
-        for row in &keyboard.rows {
-            for key in row {
-                if key.pressed {
-                    self.input_buffer.push(key.character); // FIXME: just going through keys is not always correct
-                }
-                if key.key == egui::Key::Space && key.pressed {
-                    self.input_buffer.clear();
-                    self.try_increment();
-                }
-            }
-        }
-
-        if self.input_buffer.len() > self.max_buffered_chars as usize {
-            self.input_buffer.remove(0);
+        //              spacebar
+        if keyboard.rows[3][0].pressed {
+            self.input_buffer.clear();
+            self.try_increment();
         }
     }
 
@@ -100,8 +90,8 @@ impl Into<bool> for PanelState {
     fn into(self) -> bool {
         match self {
             PanelState::Enabled => true,
-            PanelState::Disabled => false
-        }  
+            PanelState::Disabled => false,
+        }
     }
 }
 
@@ -122,7 +112,7 @@ pub struct TypingPanel {
     keyboard: KeyboardState,
     title: String,
     align: Align2,
-    state: PanelState, 
+    state: PanelState,
 }
 
 impl TypingPanel {
@@ -145,7 +135,8 @@ impl TypingPanel {
     fn update_keyboard_state(&mut self, input: &InputState) {
         for row in &mut self.keyboard.rows {
             for key in row {
-                key.pressed = input.key_down(key.key);
+                key.down = input.key_down(key.key);
+                key.pressed = input.key_pressed(key.key);
             }
         }
     }
@@ -173,7 +164,7 @@ impl TypingPanel {
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
-                                egui::Label::new(RichText::from(&self.text.input_buffer)),
+                                egui::widgets::TextEdit::singleline(&mut self.text.input_buffer).cursor_at_end(true),
                             );
                             ui.add_sized(
                                 Vec2::new(100., 30.),
@@ -228,7 +219,7 @@ impl App {
                         Vec2::new(button_size * width_mul, button_size),
                         Button::new(key.character.to_string())
                             //                   converting bool to either 0. or 1.
-                            .stroke(Stroke::new(key.pressed as i32 as f32, Color32::WHITE)),
+                            .stroke(Stroke::new(key.down as i32 as f32, Color32::WHITE)),
                     );
                 }
             });
@@ -267,7 +258,10 @@ impl App {
             let mut resize_requested = false;
 
             ui.horizontal(|ui| {
-                if ui.checkbox(&mut self.left_panel.state.into(), "Left panel").changed() {
+                if ui
+                    .checkbox(&mut self.left_panel.state.into(), "Left panel")
+                    .changed()
+                {
                     self.left_panel.state = !self.left_panel.state;
                     self.resize(frame);
                 }
@@ -285,7 +279,7 @@ impl App {
     fn resize(&mut self, frame: &mut Frame) {
         let mut new_size = Vec2::new(500., 800.);
         if (self.right_panel.state == PanelState::Enabled)
-        && (self.left_panel.state == PanelState::Enabled)
+            && (self.left_panel.state == PanelState::Enabled)
         {
             new_size.x += 500.0;
         }
@@ -307,7 +301,7 @@ impl eframe::App for App {
                 self.right_panel.draw(ctx);
             }
             if self.left_panel.state == PanelState::Disabled
-            && self.right_panel.state == PanelState::Disabled
+                && self.right_panel.state == PanelState::Disabled
             {
                 self.draw_about_window(ctx);
             }
