@@ -1,46 +1,19 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
 #![warn(clippy::all, rust_2018_idioms)]
-#![allow(unused, dead_code)]
+// #![allow(unused, dead_code)]
 
 mod app;
 mod keyboard;
 mod components;
 use app::App;
 use eframe::egui::Vec2;
+use eframe::epaint::Shadow;
 use eframe::{egui::{Style, Visuals}, epaint::Rounding};
 use std::sync::Arc;
 
-pub struct StyleConfig {
-    button_size: f32,
-    button_indent: f32,
-    button_spacing: Vec2,
-}
-
-impl Default for StyleConfig {
-    fn default() -> Self {
-        StyleConfig {
-            button_size: 75.,
-            button_indent: 35.,
-            button_spacing: Vec2::new(10., 10.),
-        }
-    }
-}
-pub struct ApplicationConfig {
-    style: StyleConfig,
-}
-
-impl ApplicationConfig {
-    pub fn new() -> Self {
-        ApplicationConfig {
-            style: StyleConfig::default(),
-        }
-    }
-}
-
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use eframe::epaint::Shadow;
 
     let app = App::default();
 

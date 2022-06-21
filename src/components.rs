@@ -1,22 +1,20 @@
-use eframe::egui::{self, CentralPanel};
-use eframe::egui::{ Align, Align2, Context, InputState, RichText, Vec2, };
+use eframe::egui::{self, Button, CentralPanel, Ui};
+use eframe::egui::{Align, Align2, Context, InputState, RichText, Vec2};
+use eframe::epaint::{Color32, Stroke};
 use rand::Rng;
 use std::cell::RefCell;
 use std::default::Default;
 use std::ops::Not;
-use std::vec::Vec;
 use std::rc::Rc;
+use std::vec::Vec;
 
-use crate::app::App;
-use crate::keyboard::{KeyboardState};
-use crate::{StyleConfig};
+use crate::keyboard::KeyboardState;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum PanelState {
     Enabled,
     Disabled,
 }
-
 
 impl Into<bool> for PanelState {
     fn into(self) -> bool {
@@ -45,11 +43,10 @@ impl PanelState {
 }
 
 pub trait Drawable {
-    fn draw(&mut self, ctx: &Context);
+    fn draw(&mut self, ctx: &Context, ui: &mut Ui);
 }
 
 pub struct Panel {
-    pub style: StyleConfig,
     pub title: String,
     pub state: PanelState,
 }
@@ -57,8 +54,7 @@ pub struct Panel {
 impl Panel {
     pub fn new(title: String, state: PanelState) -> Self {
         Panel {
-            style: Default::default(),
-            title, 
+            title,
             state,
         }
     }
@@ -69,7 +65,6 @@ pub struct TextContainer {
     input_buffer: String,
     words_buffer: Vec<String>,
     current_index: usize,
-    max_buffered_chars: u32,
 }
 
 impl TextContainer {
@@ -78,7 +73,6 @@ impl TextContainer {
             input_buffer: "".to_owned(),
             words_buffer: Default::default(),
             current_index: 0,
-            max_buffered_chars: 10,
             keys: keys.to_owned(),
         };
         container.generate_words(words_amount);
@@ -134,17 +128,19 @@ impl TextContainer {
 }
 
 pub struct AboutPanel {
-    pub info: Panel
+    pub info: Panel,
 }
 
 impl Default for AboutPanel {
     fn default() -> Self {
-        Self { info: Panel::new("About panel".to_owned(), PanelState::Disabled) }
+        Self {
+            info: Panel::new("About panel".to_owned(), PanelState::Disabled),
+        }
     }
 }
 
 impl Drawable for AboutPanel {
-    fn draw(&mut self, ctx: &Context) {
+    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
         CentralPanel::default().show(ctx, |ui| {
             egui::Area::new("about_area")
                 .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
@@ -159,7 +155,10 @@ impl Drawable for AboutPanel {
                         ui.label("powered by ");
                         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
                         ui.label(" and ");
-                        ui.hyperlink_to( "eframe", "https://github.com/emilk/egui/tree/master/eframe",);
+                        ui.hyperlink_to(
+                            "eframe",
+                            "https://github.com/emilk/egui/tree/master/eframe",
+                        );
                     });
                     ui.add_space(4.);
                     egui::warn_if_debug_build(ui);
@@ -167,29 +166,38 @@ impl Drawable for AboutPanel {
         });
     }
 }
-
-pub struct TypingPanel {
-    pub info: Panel,
-    pub text: TextContainer,
-    pub keyboard: KeyboardState,
+pub(crate) struct TypingPanel {
+    pub(crate) info: Panel,
+    pub(crate) text: TextContainer,
+    pub(crate) keyboard_panel: KeyboardPanel,
+    pub(crate) keyboard: Rc<RefCell<KeyboardState>>,
 }
 
 impl TypingPanel {
     pub fn new(keys: &str) -> Self {
+        let keyboard = Rc::new(RefCell::new(KeyboardState::new(keys)));
+
         TypingPanel {
             info: Panel::new(keys.to_owned() + " panel", PanelState::Enabled),
             text: TextContainer::new(keys, 10),
-            keyboard: KeyboardState::new(keys)
+            keyboard_panel: KeyboardPanel::new(
+                keyboard.clone(),
+                75.,
+                Vec2::new(10., 10.),
+                35.,
+                Color32::WHITE,
+            ),
+            keyboard,
         }
     }
 
     pub fn update(&mut self, ctx: &Context) {
         self.update_keyboard_state(&ctx.input());
-        self.text.update_input_buffer(&self.keyboard);
+        self.text.update_input_buffer(&self.keyboard.borrow());
     }
 
     pub fn update_keyboard_state(&mut self, input: &InputState) {
-        for row in &mut self.keyboard.rows {
+        for row in &mut self.keyboard.borrow_mut().rows {
             for key in row {
                 key.down = input.key_down(key.key);
                 key.pressed = input.key_pressed(key.key);
@@ -199,7 +207,7 @@ impl TypingPanel {
 }
 
 impl Drawable for TypingPanel {
-    fn draw(&mut self, ctx: &Context) {
+    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
         egui::Window::new(&self.info.title)
             .resizable(false)
             .title_bar(false)
@@ -234,27 +242,23 @@ impl Drawable for TypingPanel {
                         });
                     });
                 ui.add_space(120.);
-                App::draw_keys(&self.info.style, ui, &mut self.keyboard);
+                self.keyboard_panel.draw(ctx, ui);
                 ui.add_space(50.);
             });
     }
 }
 
 pub(crate) struct TopBar {
-    pub(crate) info: Panel,
     pub(crate) about_panel: Rc<RefCell<AboutPanel>>,
     pub(crate) left_panel: Rc<RefCell<TypingPanel>>,
     pub(crate) right_panel: Rc<RefCell<TypingPanel>>,
 }
 
 impl Drawable for TopBar {
-    fn draw(&mut self, ctx: &Context) {
+    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                if ui
-                    .button("Switch side")
-                    .clicked()
-                {
+                if ui.button("Switch side").clicked() {
                     self.about_panel.borrow_mut().info.state = PanelState::Disabled;
                     self.left_panel.borrow_mut().info.state.reverse();
                     self.right_panel.borrow_mut().info.state.reverse();
@@ -267,3 +271,51 @@ impl Drawable for TopBar {
     }
 }
 
+pub(crate) struct KeyboardPanel {
+    keyboard: Rc<RefCell<KeyboardState>>,
+    button_size: f32,
+    button_spacing: Vec2,
+    row_indent: f32,
+    stroke_color: Color32,
+}
+
+impl KeyboardPanel {
+    pub(crate) fn new(
+        keyboard: Rc<RefCell<KeyboardState>>,
+        button_size: f32,
+        button_spacing: Vec2,
+        row_indent: f32,
+        stroke_color: Color32,
+    ) -> Self {
+        KeyboardPanel {
+            keyboard,
+            button_size,
+            button_spacing,
+            row_indent,
+            stroke_color,
+        }
+    }
+}
+
+impl Drawable for KeyboardPanel {
+    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
+        ui.spacing_mut().item_spacing = self.button_spacing;
+        let mut current_row_indent = 0.;
+
+        for row in &self.keyboard.borrow().rows {
+            ui.horizontal(|ui| {
+                ui.add_space(current_row_indent);
+                for key in row {
+                    let width_mul = if key.key == egui::Key::Space { 4.6 } else { 1. };
+                    ui.add_sized(
+                        Vec2::new(self.button_size * width_mul, self.button_size),
+                        Button::new(key.character.to_string())
+                            //                   converting bool to either 0. or 1.
+                            .stroke(Stroke::new(key.down as i32 as f32, self.stroke_color)),
+                    );
+                }
+            });
+            current_row_indent += self.row_indent;
+        }
+    }
+}
