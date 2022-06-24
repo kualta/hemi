@@ -239,7 +239,6 @@ impl Drawable for TypingPanel {
                     });
                 ui.add_space(120.);
                 self.keyboard_panel.draw(ctx, ui);
-                ui.add_space(50.);
             });
     }
 }
