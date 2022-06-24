@@ -53,10 +53,7 @@ pub struct Panel {
 
 impl Panel {
     pub fn new(title: String, state: PanelState) -> Self {
-        Panel {
-            title,
-            state,
-        }
+        Panel { title, state }
     }
 }
 
@@ -80,14 +77,14 @@ impl TextContainer {
         container
     }
 
-    fn get_last_word(&self) -> Option<&String> {
+    fn last_word(&self) -> Option<&String> {
         if self.current_index == 0 {
             return None;
         }
         return Some(&self.words_buffer[self.current_index]);
     }
 
-    fn get_next_word(&self) -> Option<&String> {
+    fn next_word(&self) -> Option<&String> {
         if self.current_index + 1 >= self.words_buffer.len() {
             return None;
         }
@@ -212,8 +209,7 @@ impl Drawable for TypingPanel {
             .resizable(false)
             .title_bar(false)
             .collapsible(false)
-            .anchor(Align2::CENTER_CENTER, Vec2::new(0., 0.))
-            .min_height(800.)
+            .auto_sized()
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top(&self.info.title)
                     .resizable(false)
@@ -225,7 +221,7 @@ impl Drawable for TypingPanel {
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text.get_last_word().unwrap_or(&"".to_owned()),
+                                    self.text.last_word().unwrap_or(&"".to_owned()),
                                 )),
                             );
                             ui.add_sized(
@@ -236,7 +232,7 @@ impl Drawable for TypingPanel {
                             ui.add_sized(
                                 Vec2::new(100., 30.),
                                 egui::Label::new(RichText::from(
-                                    self.text.get_next_word().unwrap_or(&"".to_owned()),
+                                    self.text.next_word().unwrap_or(&"".to_owned()),
                                 )),
                             );
                         });
@@ -263,6 +259,12 @@ impl Drawable for TopBar {
                     self.left_panel.borrow_mut().info.state.reverse();
                     self.right_panel.borrow_mut().info.state.reverse();
                 }
+                if ui.button("Keyboard").clicked() {
+                    self.left_panel.borrow_mut().keyboard_panel.info.state.reverse();
+                    self.right_panel.borrow_mut().keyboard_panel.info.state.reverse();
+                }
+                let about_button_size = Vec2::new(50., 10.);
+                ui.allocate_space(ui.available_size() - about_button_size);
                 if ui.button("About").clicked() {
                     self.about_panel.borrow_mut().info.state.reverse();
                 }
@@ -273,6 +275,7 @@ impl Drawable for TopBar {
 
 pub(crate) struct KeyboardPanel {
     keyboard: Rc<RefCell<KeyboardState>>,
+    info: Panel,
     button_size: f32,
     button_spacing: Vec2,
     row_indent: f32,
@@ -293,12 +296,17 @@ impl KeyboardPanel {
             button_spacing,
             row_indent,
             stroke_color,
+            info: Panel {
+                title: "Keyboard Panel".to_owned(),
+                state: PanelState::Enabled
+            },
         }
     }
 }
 
 impl Drawable for KeyboardPanel {
     fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
+        if self.info.state == PanelState::Disabled { return ;}
         ui.spacing_mut().item_spacing = self.button_spacing;
         let mut current_row_indent = 0.;
 

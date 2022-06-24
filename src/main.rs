@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
 #![warn(clippy::all, rust_2018_idioms)]
-// #![allow(unused, dead_code)]
+#![allow(unused, dead_code)]
 
 mod app;
 mod keyboard;
