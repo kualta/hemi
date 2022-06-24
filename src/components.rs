@@ -1,3 +1,4 @@
+use eframe::Frame;
 use eframe::egui::{self, Button, CentralPanel, Ui};
 use eframe::egui::{Align, Align2, Context, InputState, RichText, Vec2};
 use eframe::epaint::{Color32, Stroke};
@@ -43,7 +44,7 @@ impl PanelState {
 }
 
 pub trait Drawable {
-    fn draw(&mut self, ctx: &Context, ui: &mut Ui);
+    fn draw(&mut self, frame: &mut Frame, ui: &mut Ui);
 }
 
 pub struct Panel {
@@ -137,11 +138,11 @@ impl Default for AboutPanel {
 }
 
 impl Drawable for AboutPanel {
-    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
-        CentralPanel::default().show(ctx, |ui| {
+    fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
+        CentralPanel::default().show(ui.ctx(), |ui| {
             egui::Area::new("about_area")
                 .anchor(Align2::CENTER_CENTER, Vec2::new(0.0, 0.0))
-                .show(ctx, |ui| {
+                .show(ui.ctx(), |ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
                     ui.horizontal(|ui| {
                         egui::Layout::top_down_justified(Align::Center);
@@ -204,13 +205,13 @@ impl TypingPanel {
 }
 
 impl Drawable for TypingPanel {
-    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
         egui::Window::new(&self.info.title)
             .resizable(false)
             .title_bar(false)
             .collapsible(false)
             .auto_sized()
-            .show(ctx, |ui| {
+            .show(ui.ctx(), |ui| {
                 egui::TopBottomPanel::top(&self.info.title)
                     .resizable(false)
                     .height_range(250. ..=250.)
@@ -238,7 +239,7 @@ impl Drawable for TypingPanel {
                         });
                     });
                 ui.add_space(120.);
-                self.keyboard_panel.draw(ctx, ui);
+                self.keyboard_panel.draw(frame, ui);
             });
     }
 }
@@ -250,8 +251,8 @@ pub(crate) struct TopBar {
 }
 
 impl Drawable for TopBar {
-    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
-        egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
+    fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
+        egui::TopBottomPanel::top("top_bar").show(ui.ctx(), |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Switch side").clicked() {
                     self.about_panel.borrow_mut().info.state = PanelState::Disabled;
@@ -261,6 +262,12 @@ impl Drawable for TopBar {
                 if ui.button("Keyboard").clicked() {
                     self.left_panel.borrow_mut().keyboard_panel.info.state.reverse();
                     self.right_panel.borrow_mut().keyboard_panel.info.state.reverse();
+
+                    if self.left_panel.borrow().keyboard_panel.info.state == PanelState::Disabled {
+                        frame.set_window_size(Vec2::new(500., 413.));
+                    } else {
+                        frame.set_window_size(Vec2::new(500., 743.));
+                    }
                 }
                 let about_button_size = Vec2::new(50., 10.);
                 ui.allocate_space(ui.available_size() - about_button_size);
@@ -304,7 +311,7 @@ impl KeyboardPanel {
 }
 
 impl Drawable for KeyboardPanel {
-    fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
         if self.info.state == PanelState::Disabled { return ;}
         ui.spacing_mut().item_spacing = self.button_spacing;
         let mut current_row_indent = 0.;

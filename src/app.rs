@@ -44,18 +44,18 @@ impl Default for App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         CentralPanel::default().show(ctx, |ui| {
-            self.top_bar.draw(ctx, ui);
+            self.top_bar.draw(frame, ui);
 
             if self.about_panel.borrow().info.state == PanelState::Enabled {
-                self.about_panel.borrow_mut().draw(ctx, ui);
+                self.about_panel.borrow_mut().draw(frame, ui);
                 return;
             }
             if self.left_panel.borrow().info.state == PanelState::Enabled {
                 self.left_panel.borrow_mut().update(ctx);
-                self.left_panel.borrow_mut().draw(ctx, ui);
+                self.left_panel.borrow_mut().draw(frame, ui);
             } else if self.right_panel.borrow().info.state == PanelState::Enabled {
                 self.right_panel.borrow_mut().update(ctx);
-                self.right_panel.borrow_mut().draw(ctx, ui);
+                self.right_panel.borrow_mut().draw(frame, ui);
             }
         });
     }
