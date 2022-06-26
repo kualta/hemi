@@ -5,7 +5,8 @@ use std::cell::RefCell;
 use std::default::Default;
 use std::rc::Rc;
 
-use crate::components::{AboutPanel, Drawable, PanelState, TopBar, TypingPanel};
+use crate::components::{AboutPanel, PanelState, TopBar, TypingPanel};
+use crate::drawable::Drawable;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "persistence", serde(default))] // if we add new fields, give them default values when deserializing old state
