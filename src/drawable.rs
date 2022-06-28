@@ -1,9 +1,9 @@
-use eframe::Frame;
+use crate::components::{AboutPanel, AppPanels, KeyboardPanel, PanelState, TopBar, TypingPanel};
 use eframe::egui::{self, Button, CentralPanel, Ui};
 use eframe::egui::{Align, Align2, RichText, Vec2};
-use eframe::epaint::{Stroke};
+use eframe::epaint::Stroke;
+use eframe::Frame;
 use std::default::Default;
-use crate::components::{AboutPanel, TypingPanel, KeyboardPanel, PanelState, TopBar};
 pub trait Drawable {
     fn draw(&mut self, frame: &mut Frame, ui: &mut Ui);
 }
@@ -78,18 +78,22 @@ impl Drawable for TypingPanel {
 
 impl Drawable for TopBar {
     fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
+        let mut active_panel = self.active_panel.borrow_mut();
+
         egui::TopBottomPanel::top("top_bar").show(ui.ctx(), |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Switch side").clicked() {
-                    self.about_panel.borrow_mut().info.state = PanelState::Disabled;
-                    self.left_panel.borrow_mut().info.state.reverse();
-                    self.right_panel.borrow_mut().info.state.reverse();
+                    *active_panel = match *active_panel {
+                        AppPanels::LeftTypingPanel => AppPanels::RightTypingPanel,
+                        AppPanels::RightTypingPanel => AppPanels::LeftTypingPanel,
+                        AppPanels::AboutPanel => AppPanels::LeftTypingPanel,
+                    };
                 }
                 if ui.button("Keyboard").clicked() {
-                    self.left_panel.borrow_mut().keyboard_panel.info.state.reverse();
-                    self.right_panel.borrow_mut().keyboard_panel.info.state.reverse();
+                    self.left_panel.borrow_mut().keyboard_panel.state.reverse();
+                    self.right_panel.borrow_mut().keyboard_panel.state.reverse();
 
-                    if self.left_panel.borrow().keyboard_panel.info.state == PanelState::Disabled {
+                    if self.left_panel.borrow().keyboard_panel.state == PanelState::Disabled {
                         frame.set_window_size(Vec2::new(500., 413.));
                     } else {
                         frame.set_window_size(Vec2::new(500., 743.));
@@ -98,7 +102,7 @@ impl Drawable for TopBar {
                 let about_button_size = Vec2::new(50., 10.);
                 ui.allocate_space(ui.available_size() - about_button_size);
                 if ui.button("About").clicked() {
-                    self.about_panel.borrow_mut().info.state.reverse();
+                    *active_panel = AppPanels::AboutPanel;
                 }
             });
         });
@@ -107,7 +111,9 @@ impl Drawable for TopBar {
 
 impl Drawable for KeyboardPanel {
     fn draw(&mut self, frame: &mut Frame, ui: &mut Ui) {
-        if self.info.state == PanelState::Disabled { return ;}
+        if self.state == PanelState::Disabled {
+            return;
+        }
         ui.spacing_mut().item_spacing = self.button_spacing;
         let mut current_row_indent = 0.;
 

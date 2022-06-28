@@ -9,10 +9,17 @@ use std::rc::Rc;
 use std::vec::Vec;
 
 #[derive(PartialEq, Clone, Copy)]
-pub enum PanelState {
+pub(crate) enum PanelState {
     Enabled,
     Disabled,
 }
+
+pub(crate) enum AppPanels {
+    LeftTypingPanel,
+    RightTypingPanel,
+    AboutPanel,
+}
+
 
 impl Into<bool> for PanelState {
     fn into(self) -> bool {
@@ -42,12 +49,11 @@ impl PanelState {
 
 pub struct Panel {
     pub(crate) title: String,
-    pub(crate) state: PanelState,
 }
 
 impl Panel {
-    pub fn new(title: String, state: PanelState) -> Self {
-        Panel { title, state }
+    pub(crate) fn new(title: String) -> Self {
+        Panel { title }
     }
 }
 
@@ -118,17 +124,7 @@ impl TextContainer {
     }
 }
 
-pub struct AboutPanel {
-    pub info: Panel,
-}
-
-impl Default for AboutPanel {
-    fn default() -> Self {
-        Self {
-            info: Panel::new("About panel".to_owned(), PanelState::Disabled),
-        }
-    }
-}
+pub struct AboutPanel { }
 
 pub(crate) struct TypingPanel {
     pub(crate) info: Panel,
@@ -142,7 +138,7 @@ impl TypingPanel {
         let keyboard = Rc::new(RefCell::new(KeyboardState::new(keys)));
 
         TypingPanel {
-            info: Panel::new(keys.to_owned() + " panel", PanelState::Enabled),
+            info: Panel::new(keys.to_owned() + " panel"),
             text: TextContainer::new(keys, 10),
             keyboard_panel: KeyboardPanel::new(
                 keyboard.clone(),
@@ -171,14 +167,14 @@ impl TypingPanel {
 }
 
 pub(crate) struct TopBar {
-    pub(crate) about_panel: Rc<RefCell<AboutPanel>>,
     pub(crate) left_panel: Rc<RefCell<TypingPanel>>,
     pub(crate) right_panel: Rc<RefCell<TypingPanel>>,
+    pub(crate) active_panel: Rc<RefCell<AppPanels>>,
 }
 
 pub(crate) struct KeyboardPanel {
     pub(crate) keyboard: Rc<RefCell<KeyboardState>>,
-    pub(crate) info: Panel,
+    pub(crate) state: PanelState,
     pub(crate) button_size: f32,
     pub(crate) button_spacing: Vec2,
     pub(crate) row_indent: f32,
@@ -199,10 +195,7 @@ impl KeyboardPanel {
             button_spacing,
             row_indent,
             stroke_color,
-            info: Panel {
-                title: "Keyboard Panel".to_owned(),
-                state: PanelState::Enabled,
-            },
+            state: PanelState::Enabled,
         }
     }
 }
