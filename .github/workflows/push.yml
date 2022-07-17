@@ -1,6 +1,7 @@
 on: [push]
 
-name: push
+name: CI
+
 env:
   # This is required to enable the web_sys clipboard API which egui_web uses
   # https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Clipboard.html

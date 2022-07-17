@@ -5,7 +5,6 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use std::cell::RefCell;
 use std::default::Default;
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, Read};
 use std::ops::Not;
