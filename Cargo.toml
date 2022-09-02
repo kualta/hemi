@@ -1,18 +1,22 @@
 [package]
 name = "hemi_typer"
-version = "0.2.0"
-authors = ["lectromoe <contact@lectro.moe>"]
+version = "1.0.0"
 edition = "2021"
+authors = ["lectromoe <contact@lectro.moe>"]
 
 [dependencies]
-eframe = "0.18.0"
+dioxus = { version = "0.2.4", features = ["web"] }
+getrandom = { version = "0.2.7", features = ["js"] }
 rand = "0.8.5"
 serde = { version = "1.0.137", features = ["derive"], optional = true }
 serde_json = "1.0.81"
+tailwindcss-to-rust-macros = "0.1.2"
 
-[features]
-default = []
-persistence = ["eframe/persistence", "serde"]
+[profile.dev]
+opt-level = 1
 
 [profile.release]
 opt-level = 2
+
+[profile.dev.package."*"]
+opt-level = 3
