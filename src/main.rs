@@ -3,6 +3,10 @@
 mod text_container;
 use dioxus::prelude::*;
 use std::{fs::File, io::Read};
+use text_container::WordBuffer;
+
+const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
+const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 
 struct WordDictionary {
     buffer: Vec<String>,
@@ -11,7 +15,7 @@ impl WordDictionary {
     pub(crate) fn new(path: &str) -> Self {
         let mut file_string = String::new();
         File::open(path)
-            .expect(&format!("Couldn't open path {}", path))
+            .unwrap_or_else(|_| panic!("Couldn't open path {}", path))
             .read_to_string(&mut file_string)
             .expect("Couldn't read file contents");
         let buffer = serde_json::from_str(&file_string).expect("Couldn't parse the dictionary");
@@ -20,8 +24,10 @@ impl WordDictionary {
 }
 
 fn App(cx: Scope) -> Element {
-    let dictionary = use_context_provider(&cx, || WordDictionary::new("/assets/dictionary"));
-    let text = use_context_provider(&cx, || {});
+    let dictionary = use_context_provider(&cx, || WordDictionary::new("/assets/qwerty_left.json"));
+    let dictionary = use_context::<WordDictionary>(&cx)?;
+    let buffer = use_context_provider(&cx, || WordBuffer::from_dictionary(3, &dictionary.read()));
+
     cx.render(rsx!(
         div {
             class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u
@@ -59,16 +65,20 @@ fn TopBar(cx: Scope) -> Element {
 }
 
 fn TextWindow(cx: Scope) -> Element {
+    let word_buffer = use_context::<WordBuffer>(&cx)?;
+    let words = word_buffer.read();
+    let current = words.buffer.get(0)?;
+
     cx.render(rsx!(
         div {
             class: "flex justify-center items-center content-center gap-5 p-20 mt-40",
             p {
                 class: "basis-1/4 text-right",
-                "Previous"
+                "Prev"
             }
             h1 {
                 class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center",
-                "Current" }
+                "{current}" }
             p {
                 class: "basis-1/4 text-left",
                 "Next"
