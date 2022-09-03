@@ -5,14 +5,14 @@
     <!-- using tailwind cdn in production is not a good idea -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-<link rel="preload" href="/hemi_typer-9e00a860d77c263f_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/hemi_typer-9e00a860d77c263f.js"></head>
+<link rel="preload" href="/HemiTyper/hemi_typer_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/HemiTyper/hemi_typer.js"></head>
 
 <body>
     <div id="main"> </div>
 
 
-<script type="module">import init from '/hemi_typer-9e00a860d77c263f.js';init('/hemi_typer-9e00a860d77c263f_bg.wasm');</script><script>(function () {
+<script type="module">import init from '/HemiTyper/hemi_typer.js';init('/HemiTyper/hemi_typer_bg.wasm');</script><script>(function () {
     var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     var url = protocol + '//' + window.location.host + '/_trunk/ws';
     var poll_interval = 5000;
