@@ -4,6 +4,21 @@ mod words;
 use dioxus::prelude::*;
 use words::*;
 
+enum TypingSide {
+    Left,
+    Right,
+}
+
+enum MainPanel {
+    Typing,
+    Info,
+}
+
+// struct TextWindow {
+//     previous: String,
+//     words: Iter<&String>,
+// }
+
 fn App(cx: Scope) -> Element {
     cx.render(rsx!(
         div {
@@ -42,30 +57,59 @@ fn TopBar(cx: Scope) -> Element {
 }
 
 fn TextWindow(cx: Scope) -> Element {
-    let left_dictionary = use_state(&cx, || init_left_dictionary());
-    let right_dictionary = use_state(&cx, || init_right_dictionary());
-    let buffer = use_context_provider(&cx, || WordBuffer::from_dictionary(3, &left_dictionary));
+    let left_dictionary = use_state(&cx, init_left_dictionary);
+    let right_dictionary = use_state(&cx, init_right_dictionary);
+    use_context_provider(&cx, || MainPanel::Typing);
+    use_context_provider(&cx, || TypingSide::Left);
 
-    let word_buffer = use_context::<WordBuffer>(&cx)?;
-    let words = word_buffer.read();
-    let current = words.buffer.get(0)?;
+    let main_panel = use_context::<MainPanel>(&cx)?;
+    let panel = match *main_panel.read() {
+        MainPanel::Typing => {
+            let side = use_context::<TypingSide>(&cx)?;
+            let mut words = match *side.read() {
+                TypingSide::Left => {
+                    use_state(&cx, || WordBuffer::from_dictionary(30, left_dictionary))
+                        .buffer
+                        .iter()
+                        .peekable()
+                }
+                TypingSide::Right => {
+                    use_state(&cx, || WordBuffer::from_dictionary(30, right_dictionary))
+                        .buffer
+                        .iter()
+                        .peekable()
+                }
+            };
 
-    cx.render(rsx!(
-        div {
-            class: "flex justify-center items-center content-center gap-5 p-20 mt-40",
-            p {
-                class: "basis-1/4 text-right",
-                "Prev"
-            }
-            h1 {
-                class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center",
-                "{current}" }
-            p {
-                class: "basis-1/4 text-left",
-                "Next"
-            }
+            let prev = words.next()?;
+            let current = words.next()?;
+            let next = words.peek()?.to_owned();
+
+            rsx!(
+                div {
+                    class: "flex justify-center items-center content-center gap-5 p-20 mt-40",
+                    p {
+                        class: "basis-1/4 text-right",
+                        "{prev}"
+                    }
+                    h1 {
+                        class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center",
+                        "{current}" }
+                    p {
+                        class: "basis-1/4 text-left",
+                        "{next}"
+                    }
+                }
+            )
         }
-    ))
+        MainPanel::Info => {
+            rsx!(
+                div { "HemiTyper by lectromoe! "}
+            )
+        }
+    };
+
+    cx.render(panel)
 }
 
 fn Keyboard(cx: Scope) -> Element {
