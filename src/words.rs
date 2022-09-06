@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
+use dioxus::prelude::dioxus_elements::input;
 use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::{distributions, Rng};
 use std::vec::Vec;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
@@ -43,8 +44,11 @@ pub(crate) fn init_right_dictionary() -> WordDictionary<'static> {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct WordBuffer {
-    pub(crate) buffer: Vec<String>,
+    last_word: String,
+    input: String,
+    pub(crate) words: Vec<String>,
 }
 
 impl WordBuffer {
@@ -58,7 +62,11 @@ impl WordBuffer {
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
 
-        WordBuffer { buffer }
+        WordBuffer {
+            words: buffer,
+            input: "".to_owned(),
+            last_word: "".to_owned(),
+        }
     }
 
     // pub(crate) fn from_keys(&mut self, amount: usize, keys: &Vec<char>) {
@@ -75,4 +83,30 @@ impl WordBuffer {
     //         self.buffer.push(new_word);
     //     }
     // }
+
+    pub(crate) fn submit(&mut self) {
+        self.last_word = self.input.clone();
+        self.input.clear();
+    }
+
+    pub(crate) fn last_word(&self) -> &str {
+        self.last_word.as_ref()
+    }
+
+    pub fn push_str(&mut self, string: &str) {
+        self.input.push_str(string)
+    }
+
+    pub fn push(&mut self, ch: char) {
+        self.input.push(ch)
+    }
+
+    pub(crate) fn input(&self) -> &str {
+        self.input.as_ref()
+    }
+
+    pub fn pop(&mut self) {
+        self.submit();
+        // self.input.pop()
+    }
 }

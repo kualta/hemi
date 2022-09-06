@@ -1,17 +1,18 @@
 #![allow(non_snake_case)]
 
 mod words;
+use dioxus::events::KeyCode;
 use dioxus::prelude::*;
 use words::*;
-
-enum TypingSide {
-    Left,
-    Right,
-}
 
 enum MainPanel {
     Typing,
     Info,
+}
+
+enum TypingSide {
+    Left,
+    Right,
 }
 
 // struct TextWindow {
@@ -20,10 +21,33 @@ enum MainPanel {
 // }
 
 fn App(cx: Scope) -> Element {
+    use_context_provider(&cx, || MainPanel::Typing);
+    use_context_provider(&cx, || TypingSide::Left);
+    use_context_provider(&cx, WordBuffer::default);
+
+    let word_buffer = use_context::<WordBuffer>(&cx)?;
+
     cx.render(rsx!(
         div {
             class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u
             text-white",
+            tabindex: "-1",
+            onkeypress: move |evt| {
+                let key = &evt.key;
+                let key_code = &evt.key_code;
+                let mut word_buffer = word_buffer.write();
+
+                match key_code {
+                    KeyCode::Enter => { word_buffer.submit(); return } ,
+
+                     // FIXME: doesn't get reported for some reason
+                    KeyCode::Backspace => { word_buffer.pop(); return },
+                    KeyCode::Space => { word_buffer.submit(); return },
+                    _ => ()
+                }
+
+                word_buffer.push_str(key);
+            },
             div { class: "basis-1/4"}
             div {
                 class: "basis-1/2",
@@ -59,46 +83,36 @@ fn TopBar(cx: Scope) -> Element {
 fn TextWindow(cx: Scope) -> Element {
     let left_dictionary = use_state(&cx, init_left_dictionary);
     let right_dictionary = use_state(&cx, init_right_dictionary);
-    use_context_provider(&cx, || MainPanel::Typing);
-    use_context_provider(&cx, || TypingSide::Left);
+    // let left_buffer = use_state(&cx, || WordBuffer::from_dictionary(30, left_dictionary))
+    //     .words
+    //     .iter()
+    //     .peekable();
+    // let right_buffer = use_state(&cx, || WordBuffer::from_dictionary(30, right_dictionary))
+    //     .words
+    //     .iter()
+    //     .peekable();
+    let word_buffer = use_context::<WordBuffer>(&cx)?;
+    let word_buffer = word_buffer.read();
 
     let main_panel = use_context::<MainPanel>(&cx)?;
     let panel = match *main_panel.read() {
         MainPanel::Typing => {
             let side = use_context::<TypingSide>(&cx)?;
-            let mut words = match *side.read() {
-                TypingSide::Left => {
-                    use_state(&cx, || WordBuffer::from_dictionary(30, left_dictionary))
-                        .buffer
-                        .iter()
-                        .peekable()
-                }
-                TypingSide::Right => {
-                    use_state(&cx, || WordBuffer::from_dictionary(30, right_dictionary))
-                        .buffer
-                        .iter()
-                        .peekable()
-                }
-            };
+            // let mut words = match *side.read() {
+            //     TypingSide::Left => left_buffer,
+            //     TypingSide::Right => right_buffer,
+            // };
 
-            let prev = words.next()?;
-            let current = words.next()?;
-            let next = words.peek()?.to_owned();
+            let prev = word_buffer.last_word();
+            let current = word_buffer.input();
+            let next = "";
 
             rsx!(
                 div {
                     class: "flex justify-center items-center content-center gap-5 p-20 mt-40",
-                    p {
-                        class: "basis-1/4 text-right",
-                        "{prev}"
-                    }
-                    h1 {
-                        class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center",
-                        "{current}" }
-                    p {
-                        class: "basis-1/4 text-left",
-                        "{next}"
-                    }
+                    h2 { class: "basis-1/4 text-right", "{prev}" }
+                    h1 { class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center", "{current}" }
+                    h2 { class: "basis-1/4 text-left", "{next}" }
                 }
             )
         }
