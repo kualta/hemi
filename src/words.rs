@@ -105,8 +105,7 @@ impl WordBuffer {
         self.input.as_ref()
     }
 
-    pub fn pop(&mut self) {
-        self.submit();
-        // self.input.pop()
+    pub fn pop(&mut self) -> Option<char> {
+        self.input.pop()
     }
 }

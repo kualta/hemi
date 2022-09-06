@@ -32,25 +32,25 @@ fn App(cx: Scope) -> Element {
             class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u
             text-white",
             tabindex: "-1",
-            onkeypress: move |evt| {
-                let key = &evt.key;
+            onkeydown: move |evt| {
                 let key_code = &evt.key_code;
                 let mut word_buffer = word_buffer.write();
-
                 match key_code {
-                    KeyCode::Enter => { word_buffer.submit(); return } ,
-
-                     // FIXME: doesn't get reported for some reason
-                    KeyCode::Backspace => { word_buffer.pop(); return },
-                    KeyCode::Space => { word_buffer.submit(); return },
+                    KeyCode::Space => { word_buffer.submit(); },
+                    KeyCode::Backspace => { word_buffer.pop(); },
+                    KeyCode::Enter => { word_buffer.submit(); },
                     _ => ()
                 }
+            },
+            onkeypress: move |evt| {
+                let key = &evt.key;
+                if key.len() != 1 { return }
+                if key.chars().next().unwrap().is_whitespace() { return }
 
-                word_buffer.push_str(key);
+                word_buffer.write().push_str(key);
             },
             div { class: "basis-1/4"}
-            div {
-                class: "basis-1/2",
+            div { class: "basis-1/2",
                 TopBar { }
                 TextWindow { }
                 Keyboard { }
