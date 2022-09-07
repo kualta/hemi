@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
 mod words;
-use dioxus::events::KeyCode;
+use dioxus::html::input_data::keyboard_types::Code;
+use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
 use words::*;
 
@@ -33,21 +34,19 @@ fn App(cx: Scope) -> Element {
             text-white",
             tabindex: "-1",
             onkeydown: move |evt| {
-                let key_code = &evt.key_code;
+                let key_code = &evt.code();
                 let mut word_buffer = word_buffer.write();
                 match key_code {
-                    KeyCode::Space => { word_buffer.submit(); },
-                    KeyCode::Backspace => { word_buffer.pop(); },
-                    KeyCode::Enter => { word_buffer.submit(); },
+                    Code::Backspace => { word_buffer.pop(); },
+                    Code::Space => { word_buffer.submit(); },
+                    Code::Enter => { word_buffer.submit(); },
                     _ => ()
                 }
             },
             onkeypress: move |evt| {
-                let key = &evt.key;
-                if key.len() != 1 { return }
-                if key.chars().next().unwrap().is_whitespace() { return }
-
-                word_buffer.write().push_str(key);
+                if let Key::Character(key) = &evt.key() {
+                    word_buffer.write().push_str(&key.to_string());
+                };
             },
             div { class: "basis-1/4"}
             div { class: "basis-1/2",
@@ -138,5 +137,5 @@ fn Keyboard(cx: Scope) -> Element {
 }
 
 fn main() {
-    dioxus::web::launch(App);
+    dioxus_web::launch(App);
 }

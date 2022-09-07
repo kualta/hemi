@@ -5,7 +5,8 @@ edition = "2021"
 authors = ["lectromoe <contact@lectro.moe>"]
 
 [dependencies]
-dioxus = { version = "0.2.4", features = ["web"] }
+dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
+dioxus-web = { git = "https://github.com/DioxusLabs/dioxus" }
 getrandom = { version = "0.2.7", features = ["js"] }
 rand = "0.8.5"
 serde = { version = "1.0.137", features = ["derive"], optional = true }
