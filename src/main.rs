@@ -95,7 +95,7 @@ fn TextWindow(cx: Scope) -> Element {
 
             rsx!(
                 div {
-                    class: "flex justify-center items-center content-center gap-5 p-20 mt-40",
+                    class: "flex justify-center items-center content-center gap-5 p-10 mt-40 h-32",
                     h2 { class: "basis-1/4 text-right", "{prev}" }
                     h1 { class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center", "{current}" }
                     h2 { class: "basis-1/4 text-left", "{next}" }
@@ -116,31 +116,33 @@ fn Keyboard(cx: Scope) -> Element {
     let word_buffer = use_context::<WordBuffer>(&cx)?;
     let word_buffer = word_buffer.read();
 
-    // let keyboard = word_buffer
-    //     .keys()
-    //     .iter()
-    //     .map(|row| row.iter().map(|key|
-    //         rsx!(
-    //             button {"{key}"}
-    //         )
-    //     )
-    // );
+    let button_style = "w-16 h-14 text-gray-900 bg-white border border-gray-300 
+                        focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 
+                        font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
+                        dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 
+                        dark:hover:border-gray-600 dark:focus:ring-gray-700";
 
-    for row in word_buffer.keys() {
-        for key in row {
-            cx.render(rsx!(
-                button { "{key}" }
-            ));
+    let keyboard = rsx! {
+        word_buffer.keys().iter().enumerate().map(|(i, row)| {
+            let row_indent = (i * 10).to_string();
+            rsx! {
+                span { class: "ml-{row_indent}" }
+                row.iter().map(|key| rsx! {
+                    button {
+                        class: "{button_style}",
+                        "type": "button",
+                        "{key}"
+                    }
+                })
+                br { }
+            }
         }
-    }
-    None
+    )};
 
-    // cx.render(rsx!(
-    //     div {
-    //         class: "flex flex-col items-center content-center p-10 mt-40",
-    //     }
-    //     rsx!(keyboard)
-    // ))
+    cx.render(rsx!(div {
+        class: "content-center text-center gap-5 p-10 mt-40",
+        keyboard
+    }))
 }
 
 fn main() {
