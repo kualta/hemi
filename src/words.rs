@@ -1,14 +1,73 @@
 #![allow(dead_code)]
 
-use dioxus::prelude::dioxus_elements::input;
+use dioxus::html::input_data::keyboard_types::Key;
 use rand::seq::SliceRandom;
-use rand::{distributions, Rng};
-use std::vec::Vec;
+use std::{str::FromStr, vec::Vec};
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 
-pub(crate) struct WordDictionary<'a> {
+#[derive(PartialEq)]
+pub(crate) struct KeyState {
+    key: Key,
+    enabled: bool,
+}
+impl KeyState {
+    pub(crate) fn new(key: &Key, enabled: bool) -> Self {
+        KeyState {
+            key: key.clone(),
+            enabled,
+        }
+    }
+
+    pub(crate) fn key(&self) -> &Key {
+        &self.key
+    }
+
+    pub(crate) fn enabled(&self) -> bool {
+        self.enabled
+    }
+}
+
+pub(crate) struct KeyboardState {
+    keys: Vec<Vec<KeyState>>,
+}
+
+impl KeyboardState {
+    pub(crate) fn new(dictionary: &WordDictionary) -> Self {
+        let keys = dictionary
+            .keys()
+            .split_whitespace()
+            .map(|row| {
+                row.chars()
+                    .map(|key| KeyState {
+                        key: Key::from_str(&key.to_string()).expect("Non-existent key supplied"),
+                        enabled: false,
+                    })
+                    .collect()
+            })
+            .collect();
+
+        KeyboardState { keys }
+    }
+
+    pub(crate) fn update_for(&mut self, key: &KeyState) {
+        self.keys.iter_mut().for_each(|row| {
+            if let Some(key_state) = row.iter_mut().find(|key_state| {
+                // FIXME: slow, ugly, stupid
+                key_state.key.to_string().to_uppercase() == key.key.to_string().to_uppercase()
+            }) {
+                key_state.enabled = key.enabled
+            }
+        });
+    }
+
+    pub(crate) fn keys(&self) -> &Vec<Vec<KeyState>> {
+        self.keys.as_ref()
+    }
+}
+
+pub struct WordDictionary<'a> {
     buffer: Vec<&'a str>,
     keys: String,
 }
@@ -71,19 +130,8 @@ impl WordBuffer {
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
 
-        let mut keys = vec![];
-        for row in dictionary.keys().split_whitespace() {
-            let mut new_row = vec![];
-            for char in row.chars() {
-                if char == ' ' { break; }
-                new_row.push(char.to_string());
-            }
-            keys.push(new_row);
-        };
-
         WordBuffer {
             buffer,
-            keys,
             ..Default::default()
         }
     }

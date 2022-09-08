@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 mod words;
-use dioxus::core::IntoVNode;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
@@ -28,8 +27,10 @@ fn App(cx: Scope) -> Element {
     let left_dictionary = use_state(&cx, init_left_dictionary);
     let right_dictionary = use_state(&cx, init_right_dictionary);
     use_context_provider(&cx, || WordBuffer::new(10, left_dictionary));
+    use_context_provider(&cx, || KeyboardState::new(left_dictionary));
 
     let word_buffer = use_context::<WordBuffer>(&cx)?;
+    let keyboard_state = use_context::<KeyboardState>(&cx)?;
 
     cx.render(rsx!(
         div {
@@ -47,9 +48,16 @@ fn App(cx: Scope) -> Element {
                 }
             },
             onkeypress: move |evt| {
-                if let Key::Character(key) = &evt.key() {
+                let key = &evt.key();
+                keyboard_state.write().update_for(&KeyState::new(key, true));
+
+                if let Key::Character(key) = key {
                     word_buffer.write().push_str(&key.to_string());
                 };
+            },
+            onkeyup: move |evt| {
+                let key = &evt.key();
+                keyboard_state.write().update_for(&KeyState::new(key, false));
             },
             div { class: "basis-1/4"}
             div { class: "basis-1/2",
@@ -113,25 +121,30 @@ fn TextWindow(cx: Scope) -> Element {
 }
 
 fn Keyboard(cx: Scope) -> Element {
-    let word_buffer = use_context::<WordBuffer>(&cx)?;
-    let word_buffer = word_buffer.read();
+    let keyboard_state = use_context::<KeyboardState>(&cx)?;
+    let keyboard_state = keyboard_state.write();
 
-    let button_style = "w-16 h-14 text-gray-900 bg-white border border-gray-300 
-                        focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 
-                        font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
-                        dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 
-                        dark:hover:border-gray-600 dark:focus:ring-gray-700";
+    let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
+    focus:outline-none focus:ring-4 focus:ring-gray-200 
+    font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
+    dark:text-white dark:border-gray-600 dark:focus:ring-gray-700";
 
-    let keyboard = rsx! {
-        word_buffer.keys().iter().enumerate().map(|(i, row)| {
+    let button_inactive = "w-16 h-14 text-gray-900 bg-white focus:outline-none focus:ring-4 
+    focus:ring-gray-200 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
+    dark:text-white dark:border-gray-600 dark:focus:ring-gray-700";
+
+    let keyboard = rsx! { keyboard_state.keys().iter().enumerate().map(|(i, row)| {
             let row_indent = (i * 10).to_string();
             rsx! {
                 span { class: "ml-{row_indent}" }
-                row.iter().map(|key| rsx! {
-                    button {
-                        class: "{button_style}",
-                        "type": "button",
-                        "{key}"
+                row.iter().map(|key| {
+                    let button_style = if key.enabled() { button_active } else { button_inactive };
+                    rsx! {
+                        button {
+                            class: "{button_style}",
+                            "type": "button",
+                            "{key.key()}"
+                        }
                     }
                 })
                 br { }
