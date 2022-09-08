@@ -10,6 +10,12 @@ const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 
 pub(crate) struct WordDictionary<'a> {
     buffer: Vec<&'a str>,
+    keys: String,
+}
+impl<'a> WordDictionary<'a> {
+    pub(crate) fn keys(&self) -> &str {
+        self.keys.as_ref()
+    }
 }
 
 /// WASM doesn't support std::fs yet ¯\_(ツ)_/¯
@@ -32,6 +38,7 @@ pub(crate) struct WordDictionary<'a> {
 pub(crate) fn init_left_dictionary() -> WordDictionary<'static> {
     WordDictionary {
         buffer: vec!["QWERT", "ASDFG", "ZXCVB", "FWWET"],
+        keys: LEFT_QWERTY_KEYS.to_owned(),
     }
 }
 
@@ -41,19 +48,21 @@ pub(crate) fn init_left_dictionary() -> WordDictionary<'static> {
 pub(crate) fn init_right_dictionary() -> WordDictionary<'static> {
     WordDictionary {
         buffer: vec!["YUIOP", "HJKL:", "BNM<>", ",./'"],
+        keys: RIGHT_QWERTY_KEYS.to_owned(),
     }
 }
 
 #[derive(Default)]
 pub(crate) struct WordBuffer {
-    last_word: String,
     input: String,
-    pub(crate) words: Vec<String>,
+    last_word: String,
+    buffer: Vec<String>,
+    keys: Vec<Vec<String>>,
 }
 
 impl WordBuffer {
-    /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
-    pub(crate) fn from_dictionary(amount: usize, dictionary: &WordDictionary) -> Self {
+    /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them,
+    pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut rng = rand::thread_rng();
 
         let buffer = dictionary
@@ -62,27 +71,22 @@ impl WordBuffer {
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
 
+        let mut keys = vec![];
+        for row in dictionary.keys().split_whitespace() {
+            let mut new_row = vec![];
+            for char in row.chars() {
+                if char == ' ' { break; }
+                new_row.push(char.to_string());
+            }
+            keys.push(new_row);
+        };
+
         WordBuffer {
-            words: buffer,
-            input: "".to_owned(),
-            last_word: "".to_owned(),
+            buffer,
+            keys,
+            ..Default::default()
         }
     }
-
-    // pub(crate) fn from_keys(&mut self, amount: usize, keys: &Vec<char>) {
-    //     let mut rng = rand::thread_rng();
-
-    //     for _ in 0..amount {
-    //         let mut new_word = "";
-    //         let max_length: u32 = rng.gen_range(3..=7);
-
-    //         for _ in 1..max_length {
-    //             let index = rng.gen_range(0..keys.len()) as usize;
-    //             new_word.push(keys[index]);
-    //         }
-    //         self.buffer.push(new_word);
-    //     }
-    // }
 
     pub(crate) fn submit(&mut self) {
         self.last_word = self.input.clone();
@@ -107,5 +111,13 @@ impl WordBuffer {
 
     pub fn pop(&mut self) -> Option<char> {
         self.input.pop()
+    }
+
+    pub(crate) fn buffer(&self) -> &[String] {
+        self.buffer.as_ref()
+    }
+
+    pub(crate) fn keys(&self) -> &Vec<Vec<String>> {
+        self.keys.as_ref()
     }
 }

@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 mod words;
+use dioxus::core::IntoVNode;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
@@ -24,7 +25,9 @@ enum TypingSide {
 fn App(cx: Scope) -> Element {
     use_context_provider(&cx, || MainPanel::Typing);
     use_context_provider(&cx, || TypingSide::Left);
-    use_context_provider(&cx, WordBuffer::default);
+    let left_dictionary = use_state(&cx, init_left_dictionary);
+    let right_dictionary = use_state(&cx, init_right_dictionary);
+    use_context_provider(&cx, || WordBuffer::new(10, left_dictionary));
 
     let word_buffer = use_context::<WordBuffer>(&cx)?;
 
@@ -80,28 +83,12 @@ fn TopBar(cx: Scope) -> Element {
 }
 
 fn TextWindow(cx: Scope) -> Element {
-    let left_dictionary = use_state(&cx, init_left_dictionary);
-    let right_dictionary = use_state(&cx, init_right_dictionary);
-    // let left_buffer = use_state(&cx, || WordBuffer::from_dictionary(30, left_dictionary))
-    //     .words
-    //     .iter()
-    //     .peekable();
-    // let right_buffer = use_state(&cx, || WordBuffer::from_dictionary(30, right_dictionary))
-    //     .words
-    //     .iter()
-    //     .peekable();
     let word_buffer = use_context::<WordBuffer>(&cx)?;
     let word_buffer = word_buffer.read();
-
     let main_panel = use_context::<MainPanel>(&cx)?;
+
     let panel = match *main_panel.read() {
         MainPanel::Typing => {
-            let side = use_context::<TypingSide>(&cx)?;
-            // let mut words = match *side.read() {
-            //     TypingSide::Left => left_buffer,
-            //     TypingSide::Right => right_buffer,
-            // };
-
             let prev = word_buffer.last_word();
             let current = word_buffer.input();
             let next = "";
@@ -126,14 +113,34 @@ fn TextWindow(cx: Scope) -> Element {
 }
 
 fn Keyboard(cx: Scope) -> Element {
-    cx.render(rsx!(
-        div {
-            class: "flex flex-col items-center content-center p-10 mt-40",
-            div { "1 row" }
-            div { "2 row" }
-            div { "3 row" }
+    let word_buffer = use_context::<WordBuffer>(&cx)?;
+    let word_buffer = word_buffer.read();
+
+    // let keyboard = word_buffer
+    //     .keys()
+    //     .iter()
+    //     .map(|row| row.iter().map(|key|
+    //         rsx!(
+    //             button {"{key}"}
+    //         )
+    //     )
+    // );
+
+    for row in word_buffer.keys() {
+        for key in row {
+            cx.render(rsx!(
+                button { "{key}" }
+            ));
         }
-    ))
+    }
+    None
+
+    // cx.render(rsx!(
+    //     div {
+    //         class: "flex flex-col items-center content-center p-10 mt-40",
+    //     }
+    //     rsx!(keyboard)
+    // ))
 }
 
 fn main() {
