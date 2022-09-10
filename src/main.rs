@@ -16,20 +16,15 @@ enum TypingSide {
     Right,
 }
 
-// struct TextWindow {
-//     previous: String,
-//     words: Iter<&String>,
-// }
-
 fn App(cx: Scope) -> Element {
     use_context_provider(&cx, || MainPanel::Typing);
     use_context_provider(&cx, || TypingSide::Left);
     let left_dictionary = use_state(&cx, init_left_dictionary);
     let right_dictionary = use_state(&cx, init_right_dictionary);
-    use_context_provider(&cx, || WordBuffer::new(10, left_dictionary));
+    use_context_provider(&cx, || WordData::new(10, left_dictionary));
     use_context_provider(&cx, || KeyboardState::new(left_dictionary));
 
-    let word_buffer = use_context::<WordBuffer>(&cx)?;
+    let word_buffer = use_context::<WordData>(&cx)?;
     let keyboard_state = use_context::<KeyboardState>(&cx)?;
 
     cx.render(rsx!(
@@ -91,15 +86,15 @@ fn TopBar(cx: Scope) -> Element {
 }
 
 fn TextWindow(cx: Scope) -> Element {
-    let word_buffer = use_context::<WordBuffer>(&cx)?;
-    let word_buffer = word_buffer.read();
-    let main_panel = use_context::<MainPanel>(&cx)?;
+    let word_data = use_context::<WordData>(&cx)?;
+    let mut word_data = word_data.write();
 
+    let main_panel = use_context::<MainPanel>(&cx)?;
     let panel = match *main_panel.read() {
         MainPanel::Typing => {
-            let prev = word_buffer.last_word();
-            let current = word_buffer.input();
-            let next = "";
+            let next = word_data.buffer().get(0)?;
+            let prev = word_data.last_word();
+            let current = word_data.input();
 
             rsx!(
                 div {

@@ -111,15 +111,15 @@ pub(crate) fn init_right_dictionary() -> WordDictionary<'static> {
     }
 }
 
-#[derive(Default)]
-pub(crate) struct WordBuffer {
+#[derive(Default, Clone)]
+pub(crate) struct WordData {
     input: String,
     last_word: String,
     buffer: Vec<String>,
     keys: Vec<Vec<String>>,
 }
 
-impl WordBuffer {
+impl WordData {
     /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them,
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut rng = rand::thread_rng();
@@ -130,7 +130,7 @@ impl WordBuffer {
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
 
-        WordBuffer {
+        WordData {
             buffer,
             ..Default::default()
         }
@@ -138,6 +138,9 @@ impl WordBuffer {
 
     pub(crate) fn submit(&mut self) {
         self.last_word = self.input.clone();
+        if !self.buffer.is_empty() {
+            self.buffer.remove(0);
+        }
         self.input.clear();
     }
 
