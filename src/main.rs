@@ -17,15 +17,16 @@ enum TypingSide {
 }
 
 fn App(cx: Scope) -> Element {
-    use_context_provider(&cx, || MainPanel::Typing);
-    use_context_provider(&cx, || TypingSide::Left);
     let left_dictionary = use_state(&cx, init_left_dictionary);
     let right_dictionary = use_state(&cx, init_right_dictionary);
     use_context_provider(&cx, || WordData::new(10, left_dictionary));
     use_context_provider(&cx, || KeyboardState::new(left_dictionary));
+    use_context_provider(&cx, || MainPanel::Typing);
+    use_context_provider(&cx, || TypingSide::Left);
 
     let word_buffer = use_context::<WordData>(&cx)?;
     let keyboard_state = use_context::<KeyboardState>(&cx)?;
+    let side = use_context::<TypingSide>(&cx)?;
 
     cx.render(rsx!(
         div {
@@ -41,6 +42,16 @@ fn App(cx: Scope) -> Element {
                     Code::Enter => { word_buffer.submit(); },
                     _ => ()
                 }
+
+                if word_buffer.buffer().is_empty() {
+                    let dictionary = match *side.read() {
+                        TypingSide::Left => left_dictionary,
+                        TypingSide::Right => right_dictionary,
+                    };
+
+                    *word_buffer = WordData::new(10, dictionary);
+                }
+
             },
             onkeypress: move |evt| {
                 let key = &evt.key();
@@ -57,7 +68,7 @@ fn App(cx: Scope) -> Element {
             div { class: "basis-1/4"}
             div { class: "basis-1/2",
                 TopBar { }
-                TextWindow { }
+                TextWindow { word_data: word_buffer }
                 Keyboard { }
             }
             div { class: "basis-1/4"}
@@ -85,11 +96,11 @@ fn TopBar(cx: Scope) -> Element {
     ))
 }
 
-fn TextWindow(cx: Scope) -> Element {
-    let word_data = use_context::<WordData>(&cx)?;
-    let mut word_data = word_data.write();
-
+#[inline_props]
+fn TextWindow<'a>(cx: Scope<'a>, word_data: UseSharedState<'a, WordData>) -> Element {
+    let word_data = word_data.read();
     let main_panel = use_context::<MainPanel>(&cx)?;
+
     let panel = match *main_panel.read() {
         MainPanel::Typing => {
             let next = word_data.buffer().get(0)?;
