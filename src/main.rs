@@ -1,9 +1,11 @@
 #![allow(non_snake_case)]
 
 mod words;
+use dioxus::events::MouseEvent;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
+use dioxus_heroicons::{solid::Shape, Icon, IconButton};
 use words::*;
 
 enum MainPanel {
@@ -77,23 +79,69 @@ fn App(cx: Scope) -> Element {
 }
 
 fn TopBar(cx: Scope) -> Element {
+    let side = use_context::<TypingSide>(&cx)?;
+    let flip_side = move |_| {
+        let mut side = side.write();
+        *side = match *side {
+            TypingSide::Left => TypingSide::Right,
+            TypingSide::Right => TypingSide::Left,
+        }
+    };
+    let panel = use_context::<MainPanel>(&cx)?;
+    let toggle_info = move |_| {
+        let mut panel = panel.write();
+        *panel = match *panel {
+            MainPanel::Typing => MainPanel::Info,
+            MainPanel::Info => MainPanel::Typing,
+        }
+    };
+
     cx.render(rsx!(
         div {
-            class: "flex justify-between items-center m-5 font-semibold",
-            h1 {
-                class: "text-xl font-bold tracking-tight leading-none
-                text-gray-900 md:text-4xl lg:text-4xl dark:text-white",
-                mark { class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600", "Hemi"}
-                "Typer"
-            }
-            div { class: "", " " }
+            class: "flex justify-left items-center m-5 font-semibold",
             div {
-                class: "",
-                div { "About" }
-                div { "Change side" }
+                h1 {
+                    class: "text-xl font-bold tracking-tight leading-none
+                    text-gray-900 md:text-4xl lg:text-4xl dark:text-white",
+                    mark { class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600", "Hemi"}
+                    "Typer"
+                }
             }
+            ChangeSideButton { onclick: flip_side }
+            InfoButton { onclick: toggle_info }
+            div { " " }
         }
     ))
+}
+
+#[inline_props]
+fn ChangeSideButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
+    cx.render(rsx!(IconButton {
+        onclick: move |evt| {
+            onclick.call(evt);
+        },
+        class: "pt-3 ml-5",
+        title: "Flip Typing Side",
+        fill: "white",
+        disabled: false,
+        size: 28,
+        icon: Shape::Refresh,
+    }))
+}
+
+#[inline_props]
+fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
+    cx.render(rsx!(IconButton {
+        onclick: move |evt| {
+            onclick.call(evt);
+        },
+        class: "pt-3 ml-5",
+        title: "Flip Typing Side",
+        fill: "white",
+        disabled: false,
+        size: 28,
+        icon: Shape::InformationCircle,
+    }))
 }
 
 #[inline_props]
