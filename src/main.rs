@@ -79,13 +79,15 @@ fn App(cx: Scope) -> Element {
 }
 
 fn TopBar(cx: Scope) -> Element {
+    let word_buffer = use_context::<WordData>(&cx)?;
     let side = use_context::<TypingSide>(&cx)?;
     let flip_side = move |_| {
         let mut side = side.write();
         *side = match *side {
             TypingSide::Left => TypingSide::Right,
             TypingSide::Right => TypingSide::Left,
-        }
+        };
+        word_buffer.write().drain();
     };
     let panel = use_context::<MainPanel>(&cx)?;
     let toggle_info = move |_| {
@@ -98,7 +100,7 @@ fn TopBar(cx: Scope) -> Element {
 
     cx.render(rsx!(
         div {
-            class: "flex justify-left items-center m-5 font-semibold",
+            class: "flex justify-between items-center m-5 font-semibold",
             div {
                 h1 {
                     class: "text-xl font-bold tracking-tight leading-none
@@ -107,9 +109,11 @@ fn TopBar(cx: Scope) -> Element {
                     "Typer"
                 }
             }
-            ChangeSideButton { onclick: flip_side }
-            InfoButton { onclick: toggle_info }
             div { " " }
+            div {
+                ChangeSideButton { onclick: flip_side }
+                InfoButton { onclick: toggle_info }
+            }
         }
     ))
 }
@@ -124,7 +128,7 @@ fn ChangeSideButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Ele
         title: "Flip Typing Side",
         fill: "white",
         disabled: false,
-        size: 28,
+        size: 24,
         icon: Shape::Refresh,
     }))
 }
@@ -139,7 +143,7 @@ fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
         title: "Flip Typing Side",
         fill: "white",
         disabled: false,
-        size: 28,
+        size: 24,
         icon: Shape::InformationCircle,
     }))
 }
@@ -151,7 +155,7 @@ fn TextWindow<'a>(cx: Scope<'a>, word_data: UseSharedState<'a, WordData>) -> Ele
 
     let panel = match *main_panel.read() {
         MainPanel::Typing => {
-            let next = word_data.buffer().get(0)?;
+            let next = word_data.next_word().unwrap_or(" ");
             let prev = word_data.last_word();
             let current = word_data.input();
 

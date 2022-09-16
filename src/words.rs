@@ -148,6 +148,13 @@ impl WordData {
         self.last_word.as_ref()
     }
 
+    pub(crate) fn next_word(&self) -> Option<&str> {
+        match self.buffer.get(0) {
+            Some(word) => Some(word.as_str()),
+            None => None,
+        }
+    }
+
     pub fn push_str(&mut self, string: &str) {
         self.input.push_str(string)
     }
@@ -164,8 +171,12 @@ impl WordData {
         self.input.pop()
     }
 
-    pub(crate) fn buffer(&self) -> &[String] {
+    pub(crate) fn buffer(&self) -> &Vec<String> {
         self.buffer.as_ref()
+    }
+
+    pub(crate) fn drain(&mut self) {
+        self.buffer.drain(..);
     }
 
     pub(crate) fn keys(&self) -> &Vec<Vec<String>> {
