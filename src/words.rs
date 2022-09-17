@@ -32,7 +32,6 @@ impl KeyState {
 pub(crate) struct KeyboardState {
     keys: Vec<Vec<KeyState>>,
 }
-
 impl KeyboardState {
     pub(crate) fn new(dictionary: &WordDictionary) -> Self {
         let keys = dictionary
@@ -67,7 +66,7 @@ impl KeyboardState {
     }
 }
 
-pub struct WordDictionary<'a> {
+pub(crate) struct WordDictionary<'a> {
     buffer: Vec<&'a str>,
     keys: String,
 }
@@ -77,37 +76,22 @@ impl<'a> WordDictionary<'a> {
     }
 }
 
-/// WASM doesn't support std::fs yet ¯\_(ツ)_/¯
-/// RFC issue: https://github.com/rust-lang/rust/issues/41619
-// impl WordDictionary {
-//     pub(crate) fn new(path: &str) -> Self {
-//         let mut file_string = String::new();
-//         File::open(path)
-//             .unwrap_or_else(|_| panic!("Couldn't open path {}", path))
-//             .read_to_string(&mut file_string)
-//             .expect("Couldn't read file contents");
-//         let buffer = serde_json::from_str(&file_string).expect("Couldn't parse the dictionary");
-//         WordDictionary { buffer }
-//     }
-// }
-
-/// Initialize dictionary with words
-///
-/// It's a temporary workaround until [RFC](https://github.com/rust-lang/rfcs/pull/1868) is implemented
-pub(crate) fn init_left_dictionary() -> WordDictionary<'static> {
-    WordDictionary {
-        buffer: vec!["QWERT", "ASDFG", "ZXCVB", "FWWET"],
-        keys: LEFT_QWERTY_KEYS.to_owned(),
-    }
+pub(crate) struct AppDictionaries<'a> {
+    pub(crate) left: WordDictionary<'a>,
+    pub(crate) right: WordDictionary<'a>,
 }
-
-/// Initialize dictionary with words
-///
-/// It's a temporary workaround until [RFC](https://github.com/rust-lang/rfcs/pull/1868) is implemented
-pub(crate) fn init_right_dictionary() -> WordDictionary<'static> {
-    WordDictionary {
-        buffer: vec!["YUIOP", "HJKL:", "BNM<>", ",./'"],
-        keys: RIGHT_QWERTY_KEYS.to_owned(),
+impl Default for AppDictionaries<'_> {
+    fn default() -> Self {
+        Self {
+            left: WordDictionary {
+                buffer: vec!["QWERT", "ASDFG", "ZXCVB", "FWWET"],
+                keys: LEFT_QWERTY_KEYS.to_owned(),
+            },
+            right: WordDictionary {
+                buffer: vec!["YUIOP", "HJKL:", "BNM<>", ",./'"],
+                keys: RIGHT_QWERTY_KEYS.to_owned(),
+            },
+        }
     }
 }
 
@@ -155,11 +139,11 @@ impl WordData {
         }
     }
 
-    pub fn push_str(&mut self, string: &str) {
+    pub(crate) fn push_str(&mut self, string: &str) {
         self.input.push_str(string)
     }
 
-    pub fn push(&mut self, ch: char) {
+    pub(crate) fn push(&mut self, ch: char) {
         self.input.push(ch)
     }
 
@@ -167,7 +151,7 @@ impl WordData {
         self.input.as_ref()
     }
 
-    pub fn pop(&mut self) -> Option<char> {
+    pub(crate) fn pop(&mut self) -> Option<char> {
         self.input.pop()
     }
 

@@ -8,71 +8,83 @@ use dioxus::prelude::*;
 use dioxus_heroicons::{solid::Shape, Icon, IconButton};
 use words::*;
 
+#[derive(Clone, Copy)]
 enum MainPanel {
     Typing,
     Info,
 }
 
+#[derive(Clone, Copy)]
 enum TypingSide {
     Left,
     Right,
 }
 
+pub(crate) struct AppState {
+    keyboard: KeyboardState,
+    words: WordData,
+    panel: MainPanel,
+    side: TypingSide,
+}
+impl AppState {
+    pub(crate) fn new(dict: &WordDictionary) -> Self {
+        AppState {
+            keyboard: KeyboardState::new(dict),
+            words: WordData::new(10, dict),
+            panel: MainPanel::Typing,
+            side: TypingSide::Left,
+        }
+    }
+}
+
 fn App(cx: Scope) -> Element {
-    let left_dictionary = use_state(&cx, init_left_dictionary);
-    let right_dictionary = use_state(&cx, init_right_dictionary);
+    use_context_provider(&cx, AppDictionaries::default);
+    let dict = use_context::<AppDictionaries>(&cx)?;
 
-    use_context_provider(&cx, || WordData::new(10, left_dictionary));
-    use_context_provider(&cx, || KeyboardState::new(left_dictionary));
-    use_context_provider(&cx, || MainPanel::Typing);
-    use_context_provider(&cx, || TypingSide::Left);
+    use_context_provider(&cx, || AppState::new(&dict.read().left));
+    let app = use_context::<AppState>(&cx)?;
 
-    let word_buffer = use_context::<WordData>(&cx)?;
-    let keyboard_state = use_context::<KeyboardState>(&cx)?;
-    let main_panel = use_context::<MainPanel>(&cx)?;
-    let side = use_context::<TypingSide>(&cx)?;
-
-    let panel = match *main_panel.read() {
-        MainPanel::Typing => rsx! { TypingWindow { word_data: word_buffer } },
+    let panel = match app.read().panel {
+        MainPanel::Typing => rsx! { TypingWindow { } },
         MainPanel::Info   => rsx! { InfoWindow { } },
     };
 
-    cx.render(rsx!(
+    cx.render(rsx!{
         div {
             class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u
             text-white",
             tabindex: "-1",
             onkeydown: move |evt| {
                 let key_code = &evt.code();
-                let mut word_buffer = word_buffer.write();
                 match key_code {
-                    Code::Backspace => { word_buffer.pop(); },
-                    Code::Space => { word_buffer.submit(); },
-                    Code::Enter => { word_buffer.submit(); },
+                    Code::Backspace => { app.write().words.pop(); },
+                    Code::Space => { app.write().words.submit(); },
+                    Code::Enter => { app.write().words.submit(); },
                     _ => ()
                 }
 
-                if word_buffer.buffer().is_empty() {
-                    let dictionary = match *side.read() {
-                        TypingSide::Left => left_dictionary,
-                        TypingSide::Right => right_dictionary,
+                if app.read().words.buffer().is_empty() {
+                    let dict = dict.read();
+                    let dictionary = match app.read().side {
+                        TypingSide::Left => &dict.left,
+                        TypingSide::Right => &dict.right,
                     };
 
-                    *word_buffer = WordData::new(10, dictionary);
+                    app.write().words = WordData::new(10, dictionary);
                 }
 
             },
             onkeypress: move |evt| {
                 let key = &evt.key();
-                keyboard_state.write().update_for(&KeyState::new(key, true));
+                app.write().keyboard.update_for(&KeyState::new(key, true));
 
                 if let Key::Character(key) = key {
-                    word_buffer.write().push_str(&key.to_string());
+                    app.write().words.push_str(&key.to_string());
                 };
             },
             onkeyup: move |evt| {
                 let key = &evt.key();
-                keyboard_state.write().update_for(&KeyState::new(key, false));
+                app.write().keyboard.update_for(&KeyState::new(key, false));
             },
             div { class: "basis-1/4"}
             div { class: "basis-1/2",
@@ -81,24 +93,29 @@ fn App(cx: Scope) -> Element {
             }
             div { class: "basis-1/4"}
         }
-    ))
+    })
 }
 
 fn TopBar(cx: Scope) -> Element {
-    let word_buffer = use_context::<WordData>(&cx)?;
-    let side = use_context::<TypingSide>(&cx)?;
+    let app = use_context::<AppState>(&cx)?;
+    let dict = use_context::<AppDictionaries>(&cx)?;
     let flip_side = move |_| {
-        let mut side = side.write();
-        *side = match *side {
-            TypingSide::Left => TypingSide::Right,
-            TypingSide::Right => TypingSide::Left,
+        let side = app.read().side;
+        match side {
+            TypingSide::Left => {
+                app.write().side = TypingSide::Right;
+                app.write().keyboard = KeyboardState::new(&dict.read().right);
+            },
+            TypingSide::Right => {
+                app.write().side = TypingSide::Left;
+                app.write().keyboard = KeyboardState::new(&dict.read().left);
+            },
         };
-        word_buffer.write().drain();
+        app.write().words.drain();
     };
-    let panel = use_context::<MainPanel>(&cx)?;
     let toggle_info = move |_| {
-        let mut panel = panel.write();
-        *panel = match *panel {
+        let panel = &mut app.write().panel;
+        *panel = match panel {
             MainPanel::Typing => MainPanel::Info,
             MainPanel::Info => MainPanel::Typing,
         }
@@ -160,13 +177,13 @@ fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
     }))
 }
 
-#[inline_props]
-fn TypingWindow<'a>(cx: Scope<'a>, word_data: UseSharedState<'a, WordData>) -> Element {
-    let word_data = word_data.read();
+fn TypingWindow(cx: Scope) -> Element {
+    let app = use_context::<AppState>(&cx)?;
+    let app = app.write();
 
-    let next = word_data.next_word().unwrap_or(" ");
-    let prev = word_data.last_word();
-    let current = word_data.input();
+    let next = app.words.next_word().unwrap_or(" ");
+    let prev = app.words.last_word();
+    let current = app.words.input();
 
     cx.render(rsx!(
         div {
@@ -214,8 +231,8 @@ fn InfoWindow(cx: Scope) -> Element {
 }
 
 fn Keyboard(cx: Scope) -> Element {
-    let keyboard_state = use_context::<KeyboardState>(&cx)?;
-    let keyboard_state = keyboard_state.write();
+    let app = use_context::<AppState>(&cx)?;
+    let keyboard_state = &app.write().keyboard;
 
     let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
