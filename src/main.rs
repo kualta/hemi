@@ -21,6 +21,7 @@ enum TypingSide {
 fn App(cx: Scope) -> Element {
     let left_dictionary = use_state(&cx, init_left_dictionary);
     let right_dictionary = use_state(&cx, init_right_dictionary);
+
     use_context_provider(&cx, || WordData::new(10, left_dictionary));
     use_context_provider(&cx, || KeyboardState::new(left_dictionary));
     use_context_provider(&cx, || MainPanel::Typing);
@@ -28,7 +29,13 @@ fn App(cx: Scope) -> Element {
 
     let word_buffer = use_context::<WordData>(&cx)?;
     let keyboard_state = use_context::<KeyboardState>(&cx)?;
+    let main_panel = use_context::<MainPanel>(&cx)?;
     let side = use_context::<TypingSide>(&cx)?;
+
+    let panel = match *main_panel.read() {
+        MainPanel::Typing => rsx! { TypingWindow { word_data: word_buffer } },
+        MainPanel::Info   => rsx! { InfoWindow { } },
+    };
 
     cx.render(rsx!(
         div {
@@ -70,8 +77,7 @@ fn App(cx: Scope) -> Element {
             div { class: "basis-1/4"}
             div { class: "basis-1/2",
                 TopBar { }
-                TextWindow { word_data: word_buffer }
-                Keyboard { }
+                panel 
             }
             div { class: "basis-1/4"}
         }
@@ -102,11 +108,17 @@ fn TopBar(cx: Scope) -> Element {
         div {
             class: "flex justify-between items-center m-5 font-semibold",
             div {
-                h1 {
-                    class: "text-xl font-bold tracking-tight leading-none
-                    text-gray-900 md:text-4xl lg:text-4xl dark:text-white",
-                    mark { class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600", "Hemi"}
-                    "Typer"
+                a {
+                    href: "#",
+                    h1 {
+                        class: "text-xl font-bold tracking-tight leading-none
+                        text-gray-900 md:text-4xl lg:text-4xl dark:text-white",
+                        mark {
+                            class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600",
+                            "Hemi"
+                        }
+                        "Typer"
+                    }
                 }
             }
             div { " " }
@@ -140,7 +152,7 @@ fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
             onclick.call(evt);
         },
         class: "pt-3 ml-5",
-        title: "Flip Typing Side",
+        title: "Toggle Info",
         fill: "white",
         disabled: false,
         size: 24,
@@ -149,33 +161,56 @@ fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
 }
 
 #[inline_props]
-fn TextWindow<'a>(cx: Scope<'a>, word_data: UseSharedState<'a, WordData>) -> Element {
+fn TypingWindow<'a>(cx: Scope<'a>, word_data: UseSharedState<'a, WordData>) -> Element {
     let word_data = word_data.read();
-    let main_panel = use_context::<MainPanel>(&cx)?;
 
-    let panel = match *main_panel.read() {
-        MainPanel::Typing => {
-            let next = word_data.next_word().unwrap_or(" ");
-            let prev = word_data.last_word();
-            let current = word_data.input();
+    let next = word_data.next_word().unwrap_or(" ");
+    let prev = word_data.last_word();
+    let current = word_data.input();
 
-            rsx!(
-                div {
-                    class: "flex justify-center items-center content-center gap-5 p-10 mt-40 h-32",
-                    h2 { class: "basis-1/4 text-right", "{prev}" }
-                    h1 { class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center", "{current}" }
-                    h2 { class: "basis-1/4 text-left", "{next}" }
+    cx.render(rsx!(
+        div {
+            class: "flex justify-center items-center content-center gap-5 p-10 mt-40 h-32",
+            h2 { class: "basis-1/4 text-right",                                              "{prev}" }
+            h1 { class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center", "{current}" }
+            h2 { class: "basis-1/4 text-left",                                               "{next}" }
+        }
+        Keyboard { }
+    ))
+}
+
+fn InfoWindow(cx: Scope) -> Element {
+    cx.render(rsx!(
+        div {
+            class: "flex flex-col justify-center items-center content-center gap-5 p-10 mt-40",
+            div {
+                class: "w-1/2 text-center",
+                h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
+                p { class: "text-left",
+                    "HemiTyper is an experimental typing tutor that allows you to train 
+                    typing speed of your hands separately, providing you with only half 
+                    the keyboard per training session."
+                } 
+                br { }
+            }
+
+            div {
+                class: "w-1/2 text-center mt-5",
+                h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
+                p { class: "text-left",
+                    "I've found that training raw typing speed this way yields 
+                    great results long-term, but there wasn't many typing tutors that 
+                    offer this kind of training - so I made one." 
+                } 
+                br { }
+                div { 
+                    class: "mt-20",
+                    "made with ❤ by ",
+                    span { class: "underline decoration-blue-500", a { href: "https://lectro.moe/", "lectro.moe"} }
                 }
-            )
+            }
         }
-        MainPanel::Info => {
-            rsx!(
-                div { "HemiTyper by lectromoe! "}
-            )
-        }
-    };
-
-    cx.render(panel)
+    ))
 }
 
 fn Keyboard(cx: Scope) -> Element {
