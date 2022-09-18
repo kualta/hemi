@@ -5,7 +5,7 @@ use dioxus::events::MouseEvent;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
-use dioxus_heroicons::{solid::Shape, Icon, IconButton};
+use dioxus_heroicons::{solid::Shape, Icon};
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -99,7 +99,9 @@ fn App(cx: Scope) -> Element {
 fn TopBar(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let dict = use_context::<AppDictionaries>(&cx)?;
+
     let flip_side = move |_| {
+
         let side = app.read().side;
         match side {
             TypingSide::Left => {
@@ -113,6 +115,7 @@ fn TopBar(cx: Scope) -> Element {
         };
         app.write().words.drain();
     };
+
     let toggle_info = move |_| {
         let panel = &mut app.write().panel;
         *panel = match panel {
@@ -123,7 +126,7 @@ fn TopBar(cx: Scope) -> Element {
 
     cx.render(rsx!(
         div {
-            class: "flex justify-between items-center m-5 font-semibold",
+            class: "flex flex-row justify-between items-center m-5 font-semibold",
             div {
                 a {
                     href: "#",
@@ -140,6 +143,7 @@ fn TopBar(cx: Scope) -> Element {
             }
             div { " " }
             div {
+                class: "flex flex-row",
                 ChangeSideButton { onclick: flip_side }
                 InfoButton { onclick: toggle_info }
             }
@@ -149,32 +153,36 @@ fn TopBar(cx: Scope) -> Element {
 
 #[inline_props]
 fn ChangeSideButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
-    cx.render(rsx!(IconButton {
-        onclick: move |evt| {
-            onclick.call(evt);
+    cx.render(rsx!(
+        a {
+            class: "pt-3 ml-5",
+            href: "#",
+            onclick: move |evt| { onclick.call(evt); },
+            Icon {
+                class: "",
+                fill: "white",
+                size: 24,
+                icon: Shape::Refresh,
+            },
         },
-        class: "pt-3 ml-5",
-        title: "Flip Typing Side",
-        fill: "white",
-        disabled: false,
-        size: 24,
-        icon: Shape::Refresh,
-    }))
+    ))
 }
 
 #[inline_props]
 fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
-    cx.render(rsx!(IconButton {
-        onclick: move |evt| {
-            onclick.call(evt);
-        },
-        class: "pt-3 ml-5",
-        title: "Toggle Info",
-        fill: "white",
-        disabled: false,
-        size: 24,
-        icon: Shape::InformationCircle,
-    }))
+    cx.render(rsx!(
+        a {
+            class: "pt-3 ml-5",
+            href: "#",
+            onclick: move |evt| { onclick.call(evt); },
+            Icon {
+                class: "",
+                fill: "white",
+                size: 24,
+                icon: Shape::InformationCircle,
+            },
+        }
+    ))
 }
 
 fn TypingWindow(cx: Scope) -> Element {
@@ -223,7 +231,10 @@ fn InfoWindow(cx: Scope) -> Element {
                 div { 
                     class: "mt-20",
                     "made with ❤ by ",
-                    span { class: "underline decoration-blue-500", a { href: "https://lectro.moe/", "lectro.moe"} }
+                    span { 
+                        class: "underline decoration-blue-500", 
+                        a { class: "decoration-red-600", href: "https://lectro.moe/", "lectro.moe"} 
+                    }
                 }
             }
         }
@@ -264,6 +275,7 @@ fn Keyboard(cx: Scope) -> Element {
 
     cx.render(rsx!(div {
         class: "content-center text-center gap-5 p-10 mt-40",
+        id: "keyboard",
         keyboard
     }))
 }
