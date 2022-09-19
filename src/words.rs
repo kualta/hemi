@@ -1,11 +1,14 @@
 #![allow(dead_code)]
 
+use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use rand::seq::SliceRandom;
-use std::{str::FromStr, vec::Vec};
+use std::{collections::HashMap, str::FromStr, vec::Vec};
+use web_sys::HtmlAudioElement;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
+const PUBLIC_URL: &str = "/HemiTyper/";
 
 #[derive(PartialEq)]
 pub(crate) struct KeyState {
@@ -73,6 +76,42 @@ pub(crate) struct WordDictionary<'a> {
 impl<'a> WordDictionary<'a> {
     pub(crate) fn keys(&self) -> &str {
         self.keys.as_ref()
+    }
+}
+
+pub(crate) struct AudioLibrary {
+    sounds: HashMap<Code, HtmlAudioElement>,
+}
+impl Default for AudioLibrary {
+    fn default() -> Self {
+        let path = PUBLIC_URL.to_owned() + "assets/tealios/";
+        let extra: Vec<String> = vec![
+            "Space".to_owned(),
+            "Enter".to_owned(),
+            "Backspace".to_owned(),
+        ];
+        let keys: Vec<String> = ('A'..='Z').map(|c| c.to_string()).chain(extra).collect();
+        let files = keys
+            .iter()
+            .map(|key| path.to_owned() + key + ".wav")
+            .map(|file| HtmlAudioElement::new_with_src(&file).expect("Audio file not found!"));
+        let codes = keys.iter().map(|key| match key.as_str() {
+            "Space" => Code::Space,
+            "Enter" => Code::Enter,
+            "Backspace" => Code::Backspace,
+            other => Code::from_str(&("Key".to_owned() + other))
+                .unwrap_or_else(|_| panic!("key {} not found!", other)),
+        });
+        let sounds = codes.zip(files).collect();
+
+        Self { sounds }
+    }
+}
+impl AudioLibrary {
+    pub(crate) fn play(&self, key: Code) {
+        if self.sounds.contains_key(&key) {
+            self.sounds.get(&key).unwrap().play().unwrap();
+        }
     }
 }
 

@@ -8,6 +8,7 @@ use dioxus::prelude::*;
 use dioxus_heroicons::{solid::Shape, Icon};
 use words::*;
 
+
 #[derive(Clone, Copy)]
 enum MainPanel {
     Typing,
@@ -20,8 +21,13 @@ enum TypingSide {
     Right,
 }
 
+pub(crate) struct AppSettings {
+    audio_enabled: bool,
+}
+
 pub(crate) struct AppState {
     keyboard: KeyboardState,
+    settings: AppSettings,
     words: WordData,
     panel: MainPanel,
     side: TypingSide,
@@ -33,14 +39,16 @@ impl AppState {
             words: WordData::new(10, dict),
             panel: MainPanel::Typing,
             side: TypingSide::Left,
+            settings: AppSettings { audio_enabled: true },
         }
     }
 }
 
 fn App(cx: Scope) -> Element {
+    use_context_provider(&cx, AudioLibrary::default);
+    let audio = use_context::<AudioLibrary>(&cx)?;
     use_context_provider(&cx, AppDictionaries::default);
     let dict = use_context::<AppDictionaries>(&cx)?;
-
     use_context_provider(&cx, || AppState::new(&dict.read().left));
     let app = use_context::<AppState>(&cx)?;
 
@@ -62,7 +70,6 @@ fn App(cx: Scope) -> Element {
                     Code::Enter => { app.write().words.submit(); },
                     _ => ()
                 }
-
                 if app.read().words.buffer().is_empty() {
                     let dict = dict.read();
                     let dictionary = match app.read().side {
@@ -72,7 +79,7 @@ fn App(cx: Scope) -> Element {
 
                     app.write().words = WordData::new(10, dictionary);
                 }
-
+                audio.read().play(*key_code);
             },
             onkeypress: move |evt| {
                 let key = &evt.key();
