@@ -5,6 +5,7 @@ use dioxus::events::MouseEvent;
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use dioxus::prelude::*;
+use dioxus_heroicons::IconShape;
 use dioxus_heroicons::{solid::Shape, Icon};
 use words::*;
 
@@ -22,7 +23,7 @@ enum TypingSide {
 }
 
 pub(crate) struct AppSettings {
-    audio_enabled: bool,
+    sound_enabled: bool,
 }
 
 pub(crate) struct AppState {
@@ -39,7 +40,7 @@ impl AppState {
             words: WordData::new(10, dict),
             panel: MainPanel::Typing,
             side: TypingSide::Left,
-            settings: AppSettings { audio_enabled: true },
+            settings: AppSettings { sound_enabled: true },
         }
     }
 }
@@ -79,7 +80,9 @@ fn App(cx: Scope) -> Element {
 
                     app.write().words = WordData::new(10, dictionary);
                 }
-                audio.read().play(*key_code);
+                if app.read().settings.sound_enabled {
+                    audio.read().play(*key_code);
+                }
             },
             onkeypress: move |evt| {
                 let key = &evt.key();
@@ -108,7 +111,6 @@ fn TopBar(cx: Scope) -> Element {
     let dict = use_context::<AppDictionaries>(&cx)?;
 
     let flip_side = move |_| {
-
         let side = app.read().side;
         match side {
             TypingSide::Left => {
@@ -131,6 +133,13 @@ fn TopBar(cx: Scope) -> Element {
         }
     };
 
+    let toggle_sound = move |_| {
+        let sound = &mut app.write().settings.sound_enabled;
+        *sound = !*sound;
+    };
+
+    let sound_enabled = app.read().settings.sound_enabled;
+
     cx.render(rsx!(
         div {
             class: "flex flex-row justify-between items-center m-5 font-semibold",
@@ -151,15 +160,21 @@ fn TopBar(cx: Scope) -> Element {
             div { " " }
             div {
                 class: "flex flex-row",
-                ChangeSideButton { onclick: flip_side }
-                InfoButton { onclick: toggle_info }
+                ToggleButton { onclick: toggle_info, icon: Shape::InformationCircle }
+                if sound_enabled {
+                    rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeUp } }
+                } else { 
+                    rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeOff } } 
+                }
+                ToggleButton { onclick: flip_side, icon: Shape::Refresh }
             }
         }
     ))
 }
 
 #[inline_props]
-fn ChangeSideButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
+fn ToggleButton<'a, S>(cx: Scope<S>, onclick: EventHandler<'a, MouseEvent>, icon: S) -> Element 
+where S: IconShape {
     cx.render(rsx!(
         a {
             class: "pt-3 ml-5",
@@ -169,26 +184,9 @@ fn ChangeSideButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Ele
                 class: "",
                 fill: "white",
                 size: 24,
-                icon: Shape::Refresh,
+                icon: icon.clone(),
             },
         },
-    ))
-}
-
-#[inline_props]
-fn InfoButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>) -> Element {
-    cx.render(rsx!(
-        a {
-            class: "pt-3 ml-5",
-            href: "#",
-            onclick: move |evt| { onclick.call(evt); },
-            Icon {
-                class: "",
-                fill: "white",
-                size: 24,
-                icon: Shape::InformationCircle,
-            },
-        }
     ))
 }
 
