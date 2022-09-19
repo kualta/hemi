@@ -85,11 +85,7 @@ pub(crate) struct AudioLibrary {
 impl Default for AudioLibrary {
     fn default() -> Self {
         let path = PUBLIC_URL.to_owned() + "assets/tealios/";
-        let extra: Vec<String> = vec![
-            "Space".to_owned(),
-            "Enter".to_owned(),
-            "Backspace".to_owned(),
-        ];
+        let extra: Vec<String> = vec!["Space".to_owned(), "Enter".to_owned(), "Backspace".to_owned()];
         let keys: Vec<String> = ('A'..='Z').map(|c| c.to_string()).chain(extra).collect();
         let files = keys
             .iter()

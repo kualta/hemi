@@ -198,12 +198,17 @@ fn TypingWindow(cx: Scope) -> Element {
     let prev = app.words.last_word();
     let current = app.words.input();
 
+    let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
+                                bg-gradient-to-br from-teal-50 to-teal-200 basis-1/4";
+    let main_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
+                                bg-gradient-to-br from-sky-300 to-sky-200 basis-1/4";
+
     cx.render(rsx!(
         div {
             class: "flex justify-center items-center content-center gap-5 p-10 mt-40 h-32",
-            h2 { class: "basis-1/4 text-right",                                              "{prev}" }
-            h1 { class: "text-xl font-bold tracking-tight text-white basis-1/4 text-center", "{current}" }
-            h2 { class: "basis-1/4 text-left",                                               "{next}" }
+            h2 { class: "{side_text_style} text-right",  "{prev}" }
+            h1 { class: "{main_text_style} text-center", "{current}" }
+            h2 { class: "{side_text_style} text-left",   "{next}" }
         }
         Keyboard { }
     ))
