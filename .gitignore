@@ -1,5 +1,5 @@
-/target
 /.vscode
 /.idea
-/Dist
+/target
+/dist
 Cargo.lock

@@ -3,6 +3,7 @@
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use rand::seq::SliceRandom;
+use std::any::Any;
 use std::{collections::HashMap, str::FromStr, vec::Vec};
 use web_sys::HtmlAudioElement;
 
@@ -10,6 +11,7 @@ const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
 const PUBLIC_URL: &str = "/HemiTyper/";
 
+/// Stores pressed state of keys
 #[derive(PartialEq)]
 pub(crate) struct KeyState {
     key: Key,
@@ -32,9 +34,11 @@ impl KeyState {
     }
 }
 
+/// Stores rows of [`KeyState`]s for the keyboard
 pub(crate) struct KeyboardState {
     keys: Vec<Vec<KeyState>>,
 }
+
 impl KeyboardState {
     pub(crate) fn new(dictionary: &WordDictionary) -> Self {
         let keys = dictionary
@@ -69,10 +73,15 @@ impl KeyboardState {
     }
 }
 
+/// Stores dictionaries of words and keys they consist of.
+///
+/// # Note
+/// `keys` is expected to be a whitespace-separated uppercase sequence of key rows
 pub(crate) struct WordDictionary<'a> {
     buffer: Vec<&'a str>,
     keys: String,
 }
+
 impl<'a> WordDictionary<'a> {
     pub(crate) fn keys(&self) -> &str {
         self.keys.as_ref()
@@ -80,17 +89,18 @@ impl<'a> WordDictionary<'a> {
 }
 
 pub(crate) struct AudioLibrary {
-    sounds: HashMap<Code, HtmlAudioElement>,
+    sounds: HashMap<Code, String>,
 }
 impl Default for AudioLibrary {
     fn default() -> Self {
         let path = PUBLIC_URL.to_owned() + "assets/tealios/";
-        let extra: Vec<String> = vec!["Space".to_owned(), "Enter".to_owned(), "Backspace".to_owned()];
+        let extra: Vec<String> = vec![
+            "Space".to_owned(),
+            "Enter".to_owned(),
+            "Backspace".to_owned(),
+        ];
         let keys: Vec<String> = ('A'..='Z').map(|c| c.to_string()).chain(extra).collect();
-        let files = keys
-            .iter()
-            .map(|key| path.to_owned() + key + ".wav")
-            .map(|file| HtmlAudioElement::new_with_src(&file).expect("Audio file not found!"));
+        let files = keys.iter().map(|key| path.to_owned() + key + ".mp3");
         let codes = keys.iter().map(|key| match key.as_str() {
             "Space" => Code::Space,
             "Enter" => Code::Enter,
@@ -103,10 +113,13 @@ impl Default for AudioLibrary {
         Self { sounds }
     }
 }
+
 impl AudioLibrary {
     pub(crate) fn play(&self, key: Code) {
         if self.sounds.contains_key(&key) {
-            self.sounds.get(&key).unwrap().play().unwrap();
+            let _ = HtmlAudioElement::new_with_src(self.sounds.get(&key).unwrap())
+                .expect("Audio file not found!")
+                .play();
         }
     }
 }
