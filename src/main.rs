@@ -94,12 +94,12 @@ fn App(cx: Scope) -> Element {
                 let key = &evt.key();
                 app.write().keyboard.update_for(&KeyState::new(key, false));
             },
-            div { class: "basis-1/4"}
-            div { class: "basis-1/2",
+            div { class: "md:basis-1/4"}
+            div { class: "basis-1/2 h-screen flex flex-col mx-auto",
                 TopBar { }
                 panel 
             }
-            div { class: "basis-1/4"}
+            div { class: "md:basis-1/4"}
         }
     })
 }
@@ -152,8 +152,8 @@ fn TopBar(cx: Scope) -> Element {
                 a {
                     href: "#",
                     h1 {
-                        class: "text-xl font-bold tracking-tight leading-none
-                        text-gray-900 md:text-4xl lg:text-4xl dark:text-white",
+                        class: "text-3xl font-bold tracking-tight leading-none
+                        text-gray-900 md:text-4xl dark:text-white",
                         mark {
                             class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600",
                             "Hemi"
@@ -215,7 +215,7 @@ fn TypingWindow(cx: Scope) -> Element {
 
     cx.render(rsx!(
         div {
-            class: "flex justify-center items-center content-center gap-5 p-10 mt-40 h-32",
+            class: "flex justify-center items-center content-center gap-5 p-10 my-auto h-32",
             h2 { class: "{side_text_style} text-right",  "{prev}" }
             h1 { class: "{main_text_style} text-center", "{current}" }
             h2 { class: "{side_text_style} text-left",   "{next}" }
@@ -264,11 +264,9 @@ fn InfoWindow(cx: Scope) -> Element {
 fn Keyboard(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let keyboard_enabled = app.read().settings.keyboard_enabled;
-    if !keyboard_enabled {
-        return None;
-    }
-
     let keyboard_state = &app.write().keyboard;
+
+    if !keyboard_enabled { return None; }
 
     let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
@@ -283,26 +281,30 @@ fn Keyboard(cx: Scope) -> Element {
             let row_indent = (i * 10).to_string();
             rsx! {
                 span { class: "ml-{row_indent}" }
-                row.iter().map(|key| {
-                    let button_style = if key.enabled() { button_active } else { button_inactive };
-                    rsx! {
-                        button {
-                            class: "{button_style}",
-                            "type": "button",
-                            "{key.key()}"
+                span {
+                    row.iter().map(|key| {
+                        let button_style = if key.enabled() { button_active } else { button_inactive };
+                        rsx! {
+                            button {
+                                class: "{button_style}",
+                                "type": "button",
+                                "{key.key()}"
+                            }
                         }
-                    }
-                })
+                    })
+                }
                 br { }
             }
         }
     )};
 
-    cx.render(rsx!(div {
-        class: "content-center text-center gap-5 p-10 mt-40",
-        id: "keyboard",
-        keyboard
-    }))
+    cx.render(rsx!(
+        div {
+            class: "content-center text-center overflow-visible w-max m-auto gap-5",
+            id: "keyboard",
+            keyboard
+        }
+    ))
 }
 
 fn main() {

@@ -1,7 +1,5 @@
-use dioxus::html::input_data::keyboard_types::Code;
-use dioxus::html::input_data::keyboard_types::Key;
+use dioxus::html::input_data::keyboard_types::{Code, Key};
 use rand::seq::SliceRandom;
-use std::any::Any;
 use std::{collections::HashMap, str::FromStr, vec::Vec};
 use web_sys::HtmlAudioElement;
 
@@ -193,10 +191,6 @@ impl WordData {
 
     pub(crate) fn push_str(&mut self, string: &str) {
         self.input.push_str(string)
-    }
-
-    pub(crate) fn push(&mut self, ch: char) {
-        self.input.push(ch)
     }
 
     pub(crate) fn input(&self) -> &str {
