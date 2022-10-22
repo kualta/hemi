@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use dioxus::html::input_data::keyboard_types::Code;
 use dioxus::html::input_data::keyboard_types::Key;
 use rand::seq::SliceRandom;
@@ -17,6 +15,7 @@ pub(crate) struct KeyState {
     key: Key,
     enabled: bool,
 }
+
 impl KeyState {
     pub(crate) fn new(key: &Key, enabled: bool) -> Self {
         KeyState {
@@ -88,9 +87,11 @@ impl<'a> WordDictionary<'a> {
     }
 }
 
+/// Maps Key [`Code`] to audio file path
 pub(crate) struct AudioLibrary {
     sounds: HashMap<Code, String>,
 }
+
 impl Default for AudioLibrary {
     fn default() -> Self {
         let path = PUBLIC_URL.to_owned() + "assets/tealios/";
@@ -146,16 +147,16 @@ impl Default for AppDictionaries<'_> {
     }
 }
 
+/// Stores data for typing panel
 #[derive(Default, Clone)]
 pub(crate) struct WordData {
     input: String,
     last_word: String,
     buffer: Vec<String>,
-    keys: Vec<Vec<String>>,
 }
 
 impl WordData {
-    /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them,
+    /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut rng = rand::thread_rng();
 
@@ -212,9 +213,5 @@ impl WordData {
 
     pub(crate) fn drain(&mut self) {
         self.buffer.drain(..);
-    }
-
-    pub(crate) fn keys(&self) -> &Vec<Vec<String>> {
-        self.keys.as_ref()
     }
 }

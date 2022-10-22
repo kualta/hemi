@@ -1,14 +1,11 @@
 #![allow(non_snake_case)]
 
 mod words;
-use dioxus::events::MouseEvent;
-use dioxus::html::input_data::keyboard_types::Code;
-use dioxus::html::input_data::keyboard_types::Key;
-use dioxus::prelude::*;
-use dioxus_heroicons::IconShape;
-use dioxus_heroicons::{solid::Shape, Icon};
-use words::*;
 
+use dioxus::{events::MouseEvent, html::input_data::keyboard_types::{Code, Key}};
+use dioxus_heroicons::{IconShape, solid::Shape, Icon};
+use dioxus::prelude::*;
+use words::*;
 
 #[derive(Clone, Copy)]
 enum MainPanel {
@@ -24,6 +21,7 @@ enum TypingSide {
 
 pub(crate) struct AppSettings {
     sound_enabled: bool,
+    keyboard_enabled: bool,
 }
 
 pub(crate) struct AppState {
@@ -40,7 +38,7 @@ impl AppState {
             words: WordData::new(10, dict),
             panel: MainPanel::Typing,
             side: TypingSide::Left,
-            settings: AppSettings { sound_enabled: true },
+            settings: AppSettings { sound_enabled: true, keyboard_enabled: true },
         }
     }
 }
@@ -137,8 +135,15 @@ fn TopBar(cx: Scope) -> Element {
         let sound = &mut app.write().settings.sound_enabled;
         *sound = !*sound;
     };
+    
+    let toggle_keyboard = move |_| {
+        let keyboard = &mut app.write().settings.keyboard_enabled;
+        *keyboard = !*keyboard;
+    };
 
-    let sound_enabled = app.read().settings.sound_enabled;
+    let app = app.read();
+    let sound_enabled = app.settings.sound_enabled;
+    let keyboard_enabled = app.settings.keyboard_enabled;
 
     cx.render(rsx!(
         div {
@@ -161,6 +166,11 @@ fn TopBar(cx: Scope) -> Element {
             div {
                 class: "flex flex-row",
                 ToggleButton { onclick: toggle_info, icon: Shape::InformationCircle }
+                if keyboard_enabled {
+                    rsx! { ToggleButton { onclick: toggle_keyboard, icon: Shape::Menu } }
+                } else { 
+                    rsx! { ToggleButton { onclick: toggle_keyboard, icon: Shape::Minus } }
+                }
                 if sound_enabled {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeUp } }
                 } else { 
@@ -253,6 +263,11 @@ fn InfoWindow(cx: Scope) -> Element {
 
 fn Keyboard(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
+    let keyboard_enabled = app.read().settings.keyboard_enabled;
+    if !keyboard_enabled {
+        return None;
+    }
+
     let keyboard_state = &app.write().keyboard;
 
     let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
