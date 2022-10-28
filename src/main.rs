@@ -107,15 +107,14 @@ fn App(cx: Scope) -> Element {
         app.write().keyboard.update_for(&KeyState::new(key, false));
     };
 
-    let panel = app.read().panel;
-    let panel = match panel {
+    let panel = match app.read().panel {
         MainPanel::Typing => rsx! { TypingWindow { } },
         MainPanel::Info => rsx! { InfoWindow { } },
     };
 
-    cx.render(rsx!{
+    cx.render(rsx! {
         div {
-            class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u text-white",
+            class: "h-screen flex bg-gray-900 roboto-mono text-gray-300",
             tabindex: "-1",
             onkeydown: on_key_down,
             onkeypress: on_key_press,
@@ -174,17 +173,13 @@ fn TopBar(cx: Scope) -> Element {
 
     cx.render(rsx!(
         div {
-            class: "flex flex-row justify-between items-center m-5 font-semibold",
+            class: "flex flex-row justify-between items-center m-5",
             div {
                 a {
                     href: "#",
                     h1 {
-                        class: "text-3xl font-bold tracking-tight leading-none
-                        text-gray-900 md:text-4xl dark:text-white",
-                        mark {
-                            class: "px-2 text-white bg-gray-400 rounded dark:bg-gray-600",
-                            "Hemi"
-                        }
+                        class: "text-3xl md:text-4xl font-semibold tracking-tight leading-none text-gray-100",
+                        mark { class: "px-2 mx-1 text-gray-100 bg-gray-700 rounded dark:bg-gray-700", "Hemi" }
                         "Typer"
                     }
                 }
@@ -268,7 +263,6 @@ fn InfoWindow(cx: Scope) -> Element {
                     typing speed of your hands separately, providing you with only half 
                     the keyboard per training session."
                 }
-                br { }
             }
 
             div {
@@ -279,16 +273,22 @@ fn InfoWindow(cx: Scope) -> Element {
                     great results long-term, but there wasn't many typing tutors that 
                     offer this kind of training - so I made one." 
                 }
-                br { }
-                div {
-                    class: "mt-20",
-                    "made with ❤ by ",
-                    span {
-                        class: "underline decoration-blue-500",
-                        a { class: "decoration-red-600", href: "https://lectro.moe/", "lectro.moe"}
-                    }
+            }
+
+            div {
+                class: "mt-20 text-center",
+                "made with ❤ by ",
+                span {
+                    class: "underline",
+                    a { class: "", href: "https://lectro.moe/", "lectro.moe"}
                 }
             }
+
+            div {
+                class: "underline text-neutral-400",
+                a { class: "", href: "https://github.com/lectromoe/HemiTyper", "source"}
+            }
+
         }
     ))
 }
