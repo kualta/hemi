@@ -211,7 +211,7 @@ where
 {
     cx.render(rsx!(
         a {
-            class: "pt-3 ml-5",
+            class: "mt-3 ml-5",
             href: "#",
             onclick: move |evt| { onclick.call(evt); },
             Icon {
@@ -259,7 +259,7 @@ fn InfoWindow(cx: Scope) -> Element {
                 class: "w-1/2 text-center",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
                 p { class: "text-left",
-                    "HemiTyper is an experimental typing tutor that allows you to train
+                    "HemiTyper is an experimental typing trainer that helps to train
                     typing speed of your hands separately, providing you with only half 
                     the keyboard per training session."
                 }
@@ -276,6 +276,20 @@ fn InfoWindow(cx: Scope) -> Element {
             }
 
             div {
+                class: "w-1/2 text-center mt-5",
+                h1 { class: "text-xl tracking-tight text-white font-bold", "next" }
+                p { class: "text-left",
+                    "After you're done training here, I highly recommend you
+                    to continue with a full-featured typing trainer like "
+                    span {
+                        class: "underline",
+                        a { class: "", href: "https://monkeytype.com/", "monkeytype"}
+                    }
+                    ", which this tool was heavily inspired by."
+                }
+            }
+
+            div {
                 class: "mt-20 text-center",
                 "made with ❤ by ",
                 span {
@@ -286,7 +300,7 @@ fn InfoWindow(cx: Scope) -> Element {
 
             div {
                 class: "underline text-neutral-400",
-                a { class: "", href: "https://github.com/lectromoe/HemiTyper", "source"}
+                a { class: "", href: "https://github.com/lectromoe/HemiTyper", "source code"}
             }
 
         }
@@ -302,14 +316,14 @@ fn Keyboard(cx: Scope) -> Element {
         return None;
     }
 
-    let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
+    let button_active = "w-16 h-14 text-gray-400 bg-white border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
-    font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
-    dark:text-white dark:border-gray-600 dark:focus:ring-gray-700";
+    font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
+    text-white border-gray-600";
 
-    let button_inactive = "w-16 h-14 text-gray-900 bg-white focus:outline-none focus:ring-4 
-    focus:ring-gray-200 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 
-    dark:text-white dark:border-gray-600 dark:focus:ring-gray-700";
+    let button_inactive = "w-16 h-14 text-gray-400 bg-white focus:outline-none focus:ring-4 
+    focus:ring-gray-700 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
+    text-white border-gray-600";
 
     let keyboard = rsx! { keyboard_state.keys().iter().enumerate().map(|(i, row)| {
             let row_indent = (i * 10).to_string();
