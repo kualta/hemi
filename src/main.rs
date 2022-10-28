@@ -2,9 +2,13 @@
 
 mod words;
 
-use dioxus::{events::MouseEvent, html::input_data::keyboard_types::{Code, Key}};
-use dioxus_heroicons::{IconShape, solid::Shape, Icon};
 use dioxus::prelude::*;
+use dioxus::{
+    core::UiEvent,
+    events::{KeyboardData, MouseEvent},
+    html::input_data::keyboard_types::{Code, Key},
+};
+use dioxus_heroicons::{solid::Shape, Icon, IconShape};
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -31,6 +35,7 @@ pub(crate) struct AppState {
     panel: MainPanel,
     side: TypingSide,
 }
+
 impl AppState {
     pub(crate) fn new(dict: &WordDictionary) -> Self {
         AppState {
@@ -38,7 +43,10 @@ impl AppState {
             words: WordData::new(10, dict),
             panel: MainPanel::Typing,
             side: TypingSide::Left,
-            settings: AppSettings { sound_enabled: true, keyboard_enabled: true },
+            settings: AppSettings {
+                sound_enabled: true,
+                keyboard_enabled: true,
+            },
         }
     }
 }
@@ -46,58 +54,77 @@ impl AppState {
 fn App(cx: Scope) -> Element {
     use_context_provider(&cx, AudioLibrary::default);
     let audio = use_context::<AudioLibrary>(&cx)?;
+
     use_context_provider(&cx, AppDictionaries::default);
     let dict = use_context::<AppDictionaries>(&cx)?;
+
     use_context_provider(&cx, || AppState::new(&dict.read().left));
     let app = use_context::<AppState>(&cx)?;
 
-    let panel = match app.read().panel {
+    let on_key_down = move |event: UiEvent<KeyboardData>| {
+        let key_code = event.code();
+        let mut app = app.write();
+
+        match key_code {
+            Code::Backspace => {
+                app.words.pop();
+            }
+            Code::Space => {
+                app.words.submit();
+            }
+            Code::Enter => {
+                app.words.submit();
+            }
+            _ => (),
+        }
+
+        if app.words.buffer().is_empty() {
+            let app_dict = dict.read();
+            let dictionary = match app.side {
+                TypingSide::Left => &app_dict.left,
+                TypingSide::Right => &app_dict.right,
+            };
+            app.words = WordData::new(10, dictionary);
+        }
+
+        if app.settings.sound_enabled {
+            audio.read().play(key_code);
+        }
+    };
+
+    let on_key_press = move |event: UiEvent<KeyboardData>| {
+        let key = &event.key();
+        let mut app = app.write();
+        app.keyboard.update_for(&KeyState::new(key, true));
+
+        if let Key::Character(key) = key {
+            app.words.push_str(&key.to_string());
+        };
+    };
+
+    let on_key_up = move |event: UiEvent<KeyboardData>| {
+        let key = &event.key();
+        app.write().keyboard.update_for(&KeyState::new(key, false));
+    };
+
+    let panel = app.read().panel;
+    let panel = match panel {
         MainPanel::Typing => rsx! { TypingWindow { } },
-        MainPanel::Info   => rsx! { InfoWindow { } },
+        MainPanel::Info => rsx! { InfoWindow { } },
     };
 
     cx.render(rsx!{
         div {
-            class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u
-            text-white",
+            class: "h-screen flex bg-gradient-to-t from-stone-900 via-gray-700 to-gray-500 bg-gradient-to-u text-white",
             tabindex: "-1",
-            onkeydown: move |evt| {
-                let key_code = &evt.code();
-                match key_code {
-                    Code::Backspace => { app.write().words.pop(); },
-                    Code::Space => { app.write().words.submit(); },
-                    Code::Enter => { app.write().words.submit(); },
-                    _ => ()
-                }
-                if app.read().words.buffer().is_empty() {
-                    let dict = dict.read();
-                    let dictionary = match app.read().side {
-                        TypingSide::Left => &dict.left,
-                        TypingSide::Right => &dict.right,
-                    };
+            onkeydown: on_key_down,
+            onkeypress: on_key_press,
+            onkeyup: on_key_up,
 
-                    app.write().words = WordData::new(10, dictionary);
-                }
-                if app.read().settings.sound_enabled {
-                    audio.read().play(*key_code);
-                }
-            },
-            onkeypress: move |evt| {
-                let key = &evt.key();
-                app.write().keyboard.update_for(&KeyState::new(key, true));
-
-                if let Key::Character(key) = key {
-                    app.write().words.push_str(&key.to_string());
-                };
-            },
-            onkeyup: move |evt| {
-                let key = &evt.key();
-                app.write().keyboard.update_for(&KeyState::new(key, false));
-            },
             div { class: "md:basis-1/4"}
             div { class: "basis-1/2 h-screen flex flex-col mx-auto",
                 TopBar { }
-                panel 
+                panel
             }
             div { class: "md:basis-1/4"}
         }
@@ -114,11 +141,11 @@ fn TopBar(cx: Scope) -> Element {
             TypingSide::Left => {
                 app.write().side = TypingSide::Right;
                 app.write().keyboard = KeyboardState::new(&dict.read().right);
-            },
+            }
             TypingSide::Right => {
                 app.write().side = TypingSide::Left;
                 app.write().keyboard = KeyboardState::new(&dict.read().left);
-            },
+            }
         };
         app.write().words.drain();
     };
@@ -135,7 +162,7 @@ fn TopBar(cx: Scope) -> Element {
         let sound = &mut app.write().settings.sound_enabled;
         *sound = !*sound;
     };
-    
+
     let toggle_keyboard = move |_| {
         let keyboard = &mut app.write().settings.keyboard_enabled;
         *keyboard = !*keyboard;
@@ -168,13 +195,13 @@ fn TopBar(cx: Scope) -> Element {
                 ToggleButton { onclick: toggle_info, icon: Shape::InformationCircle }
                 if keyboard_enabled {
                     rsx! { ToggleButton { onclick: toggle_keyboard, icon: Shape::Menu } }
-                } else { 
+                } else {
                     rsx! { ToggleButton { onclick: toggle_keyboard, icon: Shape::Minus } }
                 }
                 if sound_enabled {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeUp } }
-                } else { 
-                    rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeOff } } 
+                } else {
+                    rsx! { ToggleButton { onclick: toggle_sound, icon: Shape::VolumeOff } }
                 }
                 ToggleButton { onclick: flip_side, icon: Shape::Refresh }
             }
@@ -183,8 +210,10 @@ fn TopBar(cx: Scope) -> Element {
 }
 
 #[inline_props]
-fn ToggleButton<'a, S>(cx: Scope<S>, onclick: EventHandler<'a, MouseEvent>, icon: S) -> Element 
-where S: IconShape {
+fn ToggleButton<'a, S>(cx: Scope<S>, onclick: EventHandler<'a, MouseEvent>, icon: S) -> Element
+where
+    S: IconShape,
+{
     cx.render(rsx!(
         a {
             class: "pt-3 ml-5",
@@ -202,7 +231,7 @@ where S: IconShape {
 
 fn TypingWindow(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
-    let app = app.write();
+    let app = app.read();
 
     let next = app.words.next_word().unwrap_or(" ");
     let prev = app.words.last_word();
@@ -213,29 +242,32 @@ fn TypingWindow(cx: Scope) -> Element {
     let main_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
                                 bg-gradient-to-br from-sky-300 to-sky-200 basis-1/4";
 
-    cx.render(rsx!(
+    cx.render(rsx! {
         div {
-            class: "flex justify-center items-center content-center gap-5 p-10 my-auto h-32",
-            h2 { class: "{side_text_style} text-right",  "{prev}" }
-            h1 { class: "{main_text_style} text-center", "{current}" }
-            h2 { class: "{side_text_style} text-left",   "{next}" }
+            class: "flex flex-col place-items-stretch h-screen gap-5 p-10",
+            div {
+                class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
+                h2 { class: "{side_text_style} text-right",  "{prev}" }
+                h1 { class: "{main_text_style} text-center", "{current}" }
+                h2 { class: "{side_text_style} text-left",   "{next}" }
+            }
+            Keyboard { }
         }
-        Keyboard { }
-    ))
+    })
 }
 
 fn InfoWindow(cx: Scope) -> Element {
     cx.render(rsx!(
         div {
-            class: "flex flex-col justify-center items-center content-center gap-5 p-10 mt-40",
+            class: "flex flex-col justify-center items-center content-center gap-5 p-10 my-auto",
             div {
                 class: "w-1/2 text-center",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
                 p { class: "text-left",
-                    "HemiTyper is an experimental typing tutor that allows you to train 
+                    "HemiTyper is an experimental typing tutor that allows you to train
                     typing speed of your hands separately, providing you with only half 
                     the keyboard per training session."
-                } 
+                }
                 br { }
             }
 
@@ -243,17 +275,17 @@ fn InfoWindow(cx: Scope) -> Element {
                 class: "w-1/2 text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
                 p { class: "text-left",
-                    "I've found that training raw typing speed this way yields 
+                    "I've found that training raw typing speed this way yields
                     great results long-term, but there wasn't many typing tutors that 
                     offer this kind of training - so I made one." 
-                } 
+                }
                 br { }
-                div { 
+                div {
                     class: "mt-20",
                     "made with ❤ by ",
-                    span { 
-                        class: "underline decoration-blue-500", 
-                        a { class: "decoration-red-600", href: "https://lectro.moe/", "lectro.moe"} 
+                    span {
+                        class: "underline decoration-blue-500",
+                        a { class: "decoration-red-600", href: "https://lectro.moe/", "lectro.moe"}
                     }
                 }
             }
@@ -264,9 +296,11 @@ fn InfoWindow(cx: Scope) -> Element {
 fn Keyboard(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let keyboard_enabled = app.read().settings.keyboard_enabled;
-    let keyboard_state = &app.write().keyboard;
+    let keyboard_state = &app.read().keyboard;
 
-    if !keyboard_enabled { return None; }
+    if !keyboard_enabled {
+        return None;
+    }
 
     let button_active = "w-16 h-14 text-gray-300 bg-white border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
@@ -298,15 +332,16 @@ fn Keyboard(cx: Scope) -> Element {
         }
     )};
 
-    cx.render(rsx!(
+    cx.render(rsx! {
         div {
             class: "content-center text-center overflow-visible w-max m-auto gap-5",
             id: "keyboard",
             keyboard
         }
-    ))
+    })
 }
 
 fn main() {
+    // dioxus_tui::launch(App);
     dioxus_web::launch(App);
 }
