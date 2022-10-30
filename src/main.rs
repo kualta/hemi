@@ -122,15 +122,36 @@ fn App(cx: Scope) -> Element {
 
             div { class: "md:basis-1/4"}
             div { class: "basis-1/2 h-screen flex flex-col mx-auto",
-                TopBar { }
+                Header { }
                 panel
+                Footer { }
             }
             div { class: "md:basis-1/4"}
         }
     })
 }
 
-fn TopBar(cx: Scope) -> Element {
+fn Footer(cx: Scope) -> Element {
+    let version = "v".to_owned() + env!("CARGO_PKG_VERSION");
+
+    cx.render(rsx!(
+        div {
+            class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
+            div {
+                class: "flex flex-row gap-5 underline",
+                a { href: "https://github.com/lectromoe/HemiTyper", "GitHub"}
+                a { href: "mailto:contact@lectro.moe", "Feedback"}
+            }
+            div { " " }
+            div {
+                class: "flex flex-row gap-5",
+                p { version }
+            }
+        }
+    ))
+}
+
+fn Header(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let dict = use_context::<AppDictionaries>(&cx)?;
 
@@ -297,12 +318,6 @@ fn InfoWindow(cx: Scope) -> Element {
                     a { class: "", href: "https://lectro.moe/", "lectro.moe"}
                 }
             }
-
-            div {
-                class: "underline text-neutral-400",
-                a { class: "", href: "https://github.com/lectromoe/HemiTyper", "source code"}
-            }
-
         }
     ))
 }

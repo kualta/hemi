@@ -1,6 +1,6 @@
 [package]
 name = "hemi_typer"
-version = "1.0.0"
+version = "2.1.0"
 edition = "2021"
 authors = ["lectromoe <contact@lectro.moe>"]
 
