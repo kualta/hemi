@@ -26,6 +26,7 @@ enum TypingSide {
 pub(crate) struct AppSettings {
     sound_enabled: bool,
     keyboard_enabled: bool,
+    status_enabled: bool,
 }
 
 pub(crate) struct AppState {
@@ -46,6 +47,7 @@ impl AppState {
             settings: AppSettings {
                 sound_enabled: true,
                 keyboard_enabled: true,
+                status_enabled: true,
             },
         }
     }
@@ -248,6 +250,8 @@ where
 fn TypingWindow(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let app = app.read();
+    let keyboard_enabled = app.settings.keyboard_enabled;
+    let status_enabled = app.settings.status_enabled;
 
     let next = app.words.next_word().unwrap_or(" ");
     let prev = app.words.last_word();
@@ -258,16 +262,31 @@ fn TypingWindow(cx: Scope) -> Element {
     let main_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
                                 bg-gradient-to-br from-sky-300 to-sky-200 basis-1/4";
 
+    let typing_panel = rsx! {
+        div { class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
+            h2 { class: "{side_text_style} text-right",  "{prev}" }
+            h1 { class: "{main_text_style} text-center", "{current}" }
+            h2 { class: "{side_text_style} text-left",   "{next}" }
+        }
+    };
+
+    let status_bar = if status_enabled {
+        rsx! { StatusBar { } }
+    } else {
+        rsx! { div { } }
+    };
+
+    let keyboard = if keyboard_enabled {
+        rsx! { Keyboard { } }
+    } else {
+        rsx! { div { } }
+    };
+
     cx.render(rsx! {
-        div {
-            class: "flex flex-col place-items-stretch h-screen gap-5 p-10",
-            div {
-                class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
-                h2 { class: "{side_text_style} text-right",  "{prev}" }
-                h1 { class: "{main_text_style} text-center", "{current}" }
-                h2 { class: "{side_text_style} text-left",   "{next}" }
-            }
-            Keyboard { }
+        div { class: "flex flex-col place-items-stretch h-screen gap-5 p-10",
+            status_bar
+            typing_panel
+            keyboard
         }
     })
 }
@@ -322,14 +341,28 @@ fn InfoWindow(cx: Scope) -> Element {
     ))
 }
 
+fn StatusBar(cx: Scope) -> Element {
+    let app = use_context::<AppState>(&cx)?;
+    let wpm = 1;
+    let streak = 1;
+
+    cx.render(rsx! {
+        div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
+            div {
+                class: "flex flex-row",
+                p { "WPM: {wpm}" }
+            }
+            div { " " }
+            div { class: "flex flex-row gap-5",
+                p { "Streak {streak}" }
+            }
+        }
+    })
+}
+
 fn Keyboard(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
-    let keyboard_enabled = app.read().settings.keyboard_enabled;
     let keyboard_state = &app.read().keyboard;
-
-    if !keyboard_enabled {
-        return None;
-    }
 
     let button_active = "w-16 h-14 text-gray-400 bg-white border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
