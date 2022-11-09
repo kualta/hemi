@@ -147,13 +147,14 @@ impl Default for AppDictionaries<'_> {
 
 /// Stores data for typing panel
 #[derive(Default, Clone)]
-pub(crate) struct WordData {
+pub(crate) struct TypingData {
     input: String,
+    streak: i32,
     last_word: String,
-    buffer: Vec<String>,
+    words_buffer: Vec<String>,
 }
 
-impl WordData {
+impl TypingData {
     /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut rng = rand::thread_rng();
@@ -164,17 +165,24 @@ impl WordData {
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
 
-        WordData {
-            buffer,
+        TypingData {
+            words_buffer: buffer,
             ..Default::default()
         }
     }
 
     pub(crate) fn submit(&mut self) {
         self.last_word = self.input.clone();
-        if !self.buffer.is_empty() {
-            self.buffer.remove(0);
+        if !self.words_buffer.is_empty() {
+            if self.input().trim() == self.words_buffer.get(0).unwrap() {
+                self.streak += 1;
+            } else {
+                self.streak = 0;
+            }
+
+            self.words_buffer.remove(0);
         }
+
         self.input.clear();
     }
 
@@ -183,7 +191,7 @@ impl WordData {
     }
 
     pub(crate) fn next_word(&self) -> Option<&str> {
-        match self.buffer.get(0) {
+        match self.words_buffer.get(0) {
             Some(word) => Some(word.as_str()),
             None => None,
         }
@@ -202,10 +210,14 @@ impl WordData {
     }
 
     pub(crate) fn buffer(&self) -> &Vec<String> {
-        self.buffer.as_ref()
+        self.words_buffer.as_ref()
     }
 
     pub(crate) fn drain(&mut self) {
-        self.buffer.drain(..);
+        self.words_buffer.drain(..);
+    }
+
+    pub(crate) fn streak(&self) -> i32 {
+        self.streak
     }
 }

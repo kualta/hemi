@@ -25,14 +25,14 @@ enum TypingSide {
 
 pub(crate) struct AppSettings {
     sound_enabled: bool,
-    keyboard_enabled: bool,
     status_enabled: bool,
+    keyboard_enabled: bool,
 }
 
 pub(crate) struct AppState {
     keyboard: KeyboardState,
     settings: AppSettings,
-    words: WordData,
+    typer: TypingData,
     panel: MainPanel,
     side: TypingSide,
 }
@@ -41,13 +41,13 @@ impl AppState {
     pub(crate) fn new(dict: &WordDictionary) -> Self {
         AppState {
             keyboard: KeyboardState::new(dict),
-            words: WordData::new(10, dict),
+            typer: TypingData::new(10, dict),
             panel: MainPanel::Typing,
             side: TypingSide::Left,
             settings: AppSettings {
                 sound_enabled: true,
-                keyboard_enabled: true,
                 status_enabled: true,
+                keyboard_enabled: true,
             },
         }
     }
@@ -69,24 +69,24 @@ fn App(cx: Scope) -> Element {
 
         match key_code {
             Code::Backspace => {
-                app.words.pop();
+                app.typer.pop();
             }
             Code::Space => {
-                app.words.submit();
+                app.typer.submit();
             }
             Code::Enter => {
-                app.words.submit();
+                app.typer.submit();
             }
             _ => (),
         }
 
-        if app.words.buffer().is_empty() {
+        if app.typer.buffer().is_empty() {
             let app_dict = dict.read();
             let dictionary = match app.side {
                 TypingSide::Left => &app_dict.left,
                 TypingSide::Right => &app_dict.right,
             };
-            app.words = WordData::new(10, dictionary);
+            app.typer = TypingData::new(10, dictionary);
         }
 
         if app.settings.sound_enabled {
@@ -100,7 +100,7 @@ fn App(cx: Scope) -> Element {
         app.keyboard.update_for(&KeyState::new(key, true));
 
         if let Key::Character(key) = key {
-            app.words.push_str(&key.to_string());
+            app.typer.push_str(&key.to_string());
         };
     };
 
@@ -169,7 +169,7 @@ fn Header(cx: Scope) -> Element {
                 app.write().keyboard = KeyboardState::new(&dict.read().left);
             }
         };
-        app.write().words.drain();
+        app.write().typer.drain();
     };
 
     let toggle_info = move |_| {
@@ -253,9 +253,9 @@ fn TypingWindow(cx: Scope) -> Element {
     let keyboard_enabled = app.settings.keyboard_enabled;
     let status_enabled = app.settings.status_enabled;
 
-    let next = app.words.next_word().unwrap_or(" ");
-    let prev = app.words.last_word();
-    let current = app.words.input();
+    let next = app.typer.next_word().unwrap_or(" ");
+    let prev = app.typer.last_word();
+    let current = app.typer.input();
 
     let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
                                 bg-gradient-to-br from-teal-50 to-teal-200 basis-1/4";
@@ -344,7 +344,7 @@ fn InfoWindow(cx: Scope) -> Element {
 fn StatusBar(cx: Scope) -> Element {
     let app = use_context::<AppState>(&cx)?;
     let wpm = 1;
-    let streak = 1;
+    let streak = app.read().typer.streak();
 
     cx.render(rsx! {
         div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
