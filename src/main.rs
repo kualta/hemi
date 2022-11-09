@@ -86,7 +86,7 @@ fn App(cx: Scope) -> Element {
                 TypingSide::Left => &app_dict.left,
                 TypingSide::Right => &app_dict.right,
             };
-            app.typer = TypingData::new(10, dictionary);
+            app.typer.generate_words(10, dictionary);
         }
 
         if app.settings.sound_enabled {

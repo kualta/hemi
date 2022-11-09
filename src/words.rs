@@ -157,18 +157,9 @@ pub(crate) struct TypingData {
 impl TypingData {
     /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
-        let mut rng = rand::thread_rng();
-
-        let buffer = dictionary
-            .buffer
-            .choose_multiple(&mut rng, amount)
-            .map(|str| str.to_string())
-            .collect::<Vec<String>>();
-
-        TypingData {
-            words_buffer: buffer,
-            ..Default::default()
-        }
+        let mut data = TypingData::default();
+        data.generate_words(amount, dictionary);
+        data
     }
 
     pub(crate) fn submit(&mut self) {
@@ -219,5 +210,15 @@ impl TypingData {
 
     pub(crate) fn streak(&self) -> i32 {
         self.streak
+    }
+
+    pub(crate) fn generate_words(&mut self, amount: usize, dictionary: &WordDictionary) {
+        let mut rng = rand::thread_rng();
+
+        self.words_buffer = dictionary
+            .buffer
+            .choose_multiple(&mut rng, amount)
+            .map(|str| str.to_string())
+            .collect::<Vec<String>>();
     }
 }
