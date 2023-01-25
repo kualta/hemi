@@ -5,10 +5,10 @@ use web_sys::HtmlAudioElement;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
-const PUBLIC_URL: &str = "/HemiTyper/";
+const PUBLIC_URL: &str = "/Hemi/";
 
 /// Stores pressed state of keys
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub(crate) struct KeyState {
     key: Key,
     enabled: bool,
@@ -32,6 +32,7 @@ impl KeyState {
 }
 
 /// Stores rows of [`KeyState`]s for the keyboard
+#[derive(Clone)]
 pub(crate) struct KeyboardState {
     keys: Vec<Vec<KeyState>>,
 }
@@ -74,6 +75,7 @@ impl KeyboardState {
 ///
 /// # Note
 /// `keys` is expected to be a whitespace-separated uppercase sequence of key rows
+#[derive(Clone)]
 pub(crate) struct WordDictionary<'a> {
     buffer: Vec<&'a str>,
     keys: String,
@@ -86,6 +88,7 @@ impl<'a> WordDictionary<'a> {
 }
 
 /// Maps Key [`Code`] to audio file path
+#[derive(Clone)]
 pub(crate) struct AudioLibrary {
     sounds: HashMap<Code, String>,
 }
@@ -123,6 +126,7 @@ impl AudioLibrary {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct AppDictionaries<'a> {
     pub(crate) left: WordDictionary<'a>,
     pub(crate) right: WordDictionary<'a>,

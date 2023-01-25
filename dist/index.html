@@ -7,19 +7,19 @@
 
     
     <link data-turnk="" rel="icon" href="assets/favicon.png">
-    <link rel="stylesheet" href="/HemiTyper/style.css">
+    <link rel="stylesheet" href="/Hemi/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap');
     </style>
 
-<link rel="preload" href="/HemiTyper/hemi_typer_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/HemiTyper/hemi_typer.js"></head>
+<link rel="preload" href="/Hemi/hemi_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/Hemi/hemi.js"></head>
 
 <body>
     <div id="main"> </div>
 
 
-<script type="module">import init from '/HemiTyper/hemi_typer.js';init('/HemiTyper/hemi_typer_bg.wasm');</script><script>(function () {
+<script type="module">import init from '/Hemi/hemi.js';init('/Hemi/hemi_bg.wasm');</script><script>(function () {
     var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     var url = protocol + '//' + window.location.host + '/_trunk/ws';
     var poll_interval = 5000;
