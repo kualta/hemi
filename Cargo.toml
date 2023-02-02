@@ -1,21 +1,20 @@
 [package]
 name = "hemi"
-version = "2.1.0"
+version = "3.0.0"
 edition = "2021"
-authors = ["Mathew Lanier <contact@lectro.moe>"]
+authors = ["kualta <contact@kualta.dev>"]
 
 [dependencies]
-dioxus = { version = "0.3.0", features = ["html"] }
+dioxus = { version = "0.3.1", features = ["html"] }
 dioxus-material-icons = "1.0.2"
 dioxus-web = "0.3.0"
 getrandom = { version = "0.2.7", features = ["js"] }
+log = "0.4.17"
 rand = "0.8.5"
 serde_json = "1.0.81"
 tailwindcss-to-rust-macros = "0.1.2"
+wasm-logger = "0.2.0"
 web-sys = { version = "0.3.60", features = ["HtmlAudioElement"] }
-
-# [patch.crates-io]
-# dioxus = { git = 'https://github.com/dioxuslabs/dioxus' }
 
 [profile.dev]
 opt-level = 1
