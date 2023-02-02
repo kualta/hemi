@@ -5,7 +5,7 @@ use web_sys::HtmlAudioElement;
 
 const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
 const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
-const PUBLIC_URL: &str = "/Hemi/";
+const PUBLIC_URL: &str = "/";
 
 /// Stores pressed state of keys
 #[derive(PartialEq, Clone)]
