@@ -125,6 +125,7 @@ fn App(cx: Scope) -> Element {
             onkeypress: on_key_press,
             onkeyup: on_key_up,
 
+            MaterialIconStylesheet { }
             div { class: "md:basis-1/4"}
             div { class: "basis-1/2 h-screen flex flex-col mx-auto",
                 Header { }
@@ -238,7 +239,6 @@ fn ToggleButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>, icon: &'a 
             class: "mt-3 ml-5",
             href: "#",
             onclick: move |evt| { onclick.call(evt); },
-            MaterialIconStylesheet { }
             MaterialIcon {
                 color: "white",
                 name: icon,
