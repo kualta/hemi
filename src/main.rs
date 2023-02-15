@@ -61,8 +61,8 @@ fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, AudioLibrary::default);
     let audio = use_shared_state::<AudioLibrary>(cx)?;
 
-    use_shared_state_provider(cx, AppDictionaries::default);
-    let dict = use_shared_state::<AppDictionaries>(cx)?;
+    use_shared_state_provider(cx, LayoutDictionary::pull);
+    let dict = use_shared_state::<LayoutDictionary>(cx)?;
 
     use_shared_state_provider(cx, || AppState::new(&dict.read().left));
     let app = use_shared_state::<AppState>(cx)?;
@@ -160,7 +160,7 @@ fn Footer(cx: Scope) -> Element {
 
 fn Header(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
-    let dict = use_shared_state::<AppDictionaries>(cx)?;
+    let dict = use_shared_state::<LayoutDictionary>(cx)?;
 
     let flip_side = move |_| {
         let side = app.read().side;
