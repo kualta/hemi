@@ -61,8 +61,16 @@ fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, AudioLibrary::default);
     let audio = use_shared_state::<AudioLibrary>(cx)?;
 
-    use_shared_state_provider(cx, LayoutDictionary::pull);
+    use_shared_state_provider(cx, LayoutDictionary::default);
     let dict = use_shared_state::<LayoutDictionary>(cx)?;
+
+    let word_data = use_future(cx, (), |_| async move { 
+        words::LayoutDictionary::pull().await 
+    });
+
+    if let Some(data) = word_data.value() {
+        *dict.write_silent() = data.clone(); 
+    }
 
     use_shared_state_provider(cx, || AppState::new(&dict.read().left));
     let app = use_shared_state::<AppState>(cx)?;

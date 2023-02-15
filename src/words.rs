@@ -129,6 +129,21 @@ pub(crate) struct LayoutDictionary {
     pub(crate) right: WordDictionary,
 }
 
+impl Default for LayoutDictionary {
+    fn default() -> Self {
+        LayoutDictionary {
+            left: WordDictionary {
+                buffer: vec![],
+                keys: "".to_owned(),
+            },
+            right: WordDictionary {
+                buffer: vec![],
+                keys: "".to_owned(),
+            },
+        }
+    }
+}
+
 impl LayoutDictionary {
     pub async fn pull() -> Self {
         let url = "https://raw.githubusercontent.com/kualta/Hemi/master/assets/qwerty.json";
