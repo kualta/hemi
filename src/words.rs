@@ -1,12 +1,8 @@
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use rand::seq::SliceRandom;
-use serde::{Serialize, Deserialize};
-use std::{collections::HashMap, str::FromStr, vec::Vec, sync::Arc};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, str::FromStr, vec::Vec};
 use web_sys::HtmlAudioElement;
-
-const LEFT_QWERTY_KEYS: &str = "QWERT ASDFG ZXCVB";
-const RIGHT_QWERTY_KEYS: &str = "YUIOP HJKL\' NM,./";
-const PUBLIC_URL: &str = "/";
 
 /// Stores pressed state of keys
 #[derive(PartialEq, Clone)]
@@ -96,7 +92,7 @@ pub(crate) struct AudioLibrary {
 
 impl Default for AudioLibrary {
     fn default() -> Self {
-        let path = PUBLIC_URL.to_owned() + "assets/tealios/";
+        let path = "assets/tealios/";
         let extra: Vec<String> = vec![
             "Space".to_owned(),
             "Enter".to_owned(),
@@ -135,8 +131,13 @@ pub(crate) struct LayoutDictionary {
 
 impl LayoutDictionary {
     pub async fn pull() -> Self {
-        let url = "";
-        let data = reqwest::get(url).await.unwrap().json::<LayoutDictionary>().await.unwrap();
+        let url = "https://raw.githubusercontent.com/kualta/Hemi/master/assets/qwerty.json";
+        let data = reqwest::get(url)
+            .await
+            .unwrap()
+            .json::<LayoutDictionary>()
+            .await
+            .unwrap();
 
         data
     }
