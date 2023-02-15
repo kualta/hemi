@@ -1,26 +1,29 @@
 <!DOCTYPE html><html><head>
+    <title>HemiTyper</title>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- using tailwind cdn in production is not a good idea. Too bad! -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
     
     
-    <link rel="icon" href="/favicon-645c694175bb94bc.png">
+    <link rel="icon" href="/icon-645c694175bb94bc.png">
     <link rel="stylesheet" href="/style-e49ad4bd33bc9e12.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap');
     </style>
 
-<link rel="preload" href="/hemi-d64153e9cb8e4485_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/hemi-d64153e9cb8e4485.js"></head>
+    <!-- using tailwind cdn in production is not a good idea. Too bad! -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preload" href="/hemi-59584105538b8d6e_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/hemi-59584105538b8d6e.js"></head>
 
 <body>
     <div id="main"> </div>
 
 
-<script type="module">import init from '/hemi-d64153e9cb8e4485.js';init('/hemi-d64153e9cb8e4485_bg.wasm');</script><script>(function () {
+<script type="module">import init from '/hemi-59584105538b8d6e.js';init('/hemi-59584105538b8d6e_bg.wasm');</script><script>(function () {
     var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     var url = protocol + '//' + window.location.host + '/_trunk/ws';
     var poll_interval = 5000;
