@@ -4,6 +4,7 @@ mod words;
 
 use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
+use dioxus::html::option;
 use dioxus::prelude::*;
 use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
 use words::*;
@@ -20,6 +21,15 @@ enum TypingSide {
     Right,
 }
 
+#[derive(Clone, Debug, Copy)]
+enum KeyboardLayout {
+    Qwerty,
+    Dvorak,
+    Colemak,
+    Workman,
+    Custom,
+}
+
 #[derive(Clone)]
 pub(crate) struct AppSettings {
     sound_enabled: bool,
@@ -32,6 +42,7 @@ pub(crate) struct AppState {
     keyboard: KeyboardState,
     settings: AppSettings,
     typer: TypingData,
+    layout: KeyboardLayout,
     panel: MainPanel,
     side: TypingSide,
 }
@@ -48,6 +59,7 @@ impl AppState {
                 status_enabled: true,
                 keyboard_enabled: true,
             },
+            layout: KeyboardLayout::Qwerty,
         }
     }
 }
@@ -64,12 +76,14 @@ fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, LayoutDictionary::default);
     let dict = use_shared_state::<LayoutDictionary>(cx)?;
 
-    let word_data = use_future(cx, (), |_| async move { 
-        words::LayoutDictionary::pull().await 
-    });
+    let word_data = use_future(
+        cx,
+        (),
+        |_| async move { words::LayoutDictionary::pull().await },
+    );
 
     if let Some(data) = word_data.value() {
-        *dict.write_silent() = data.clone(); 
+        *dict.write_silent() = data.clone();
     }
 
     use_shared_state_provider(cx, || AppState::new(&dict.read().left));
@@ -185,9 +199,20 @@ fn Header(cx: Scope) -> Element {
         app.write().typer.drain();
     };
 
-    // let switch_layout = move |_| {
-
-    // };
+    let switch_layout = move |e: Event<FormData>| {
+        let mut app = app.write();
+        let layout = &mut app.layout;
+        *layout = match e.value.as_str() {
+            "colemak" => KeyboardLayout::Colemak,
+            "workman" => KeyboardLayout::Workman,
+            "qwerty" => KeyboardLayout::Qwerty,
+            "dvorak" => KeyboardLayout::Dvorak,
+            "custom" => KeyboardLayout::Custom,
+            _ => KeyboardLayout::Qwerty,
+        };
+        app.typer.drain();
+        app.keyboard.refresh()
+    };
 
     let toggle_info = move |_| {
         let mut app = app.write();
@@ -239,6 +264,13 @@ fn Header(cx: Scope) -> Element {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: "volume_off" } }
                 }
                 ToggleButton { onclick: flip_side, icon: "loop" }
+                select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 pb-1.5 items-center justify-center",
+                    name: "layout",
+                    id: "layout",
+                    onchange: switch_layout,
+                    option { value: "qwerty", "qwerty" }
+                    option { value: "colemak", "colemak" }
+                }
             }
         }
     ))
@@ -357,19 +389,12 @@ fn InfoWindow(cx: Scope) -> Element {
 fn StatusBar(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
     let app = app.read();
-    let _wpm = 1;
     let streak = app.typer.streak();
 
     cx.render(rsx! {
         div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
-            div {
-                class: "flex flex-row",
-                // TODO: add WMP counter
-                // p { "WPM: {wpm}" }
-            }
-            div { " " }
             div { class: "flex flex-row gap-5",
-                p { "Streak {streak}" }
+                p { "streak: {streak}" }
             }
         }
     })
