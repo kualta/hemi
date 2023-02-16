@@ -185,6 +185,10 @@ fn Header(cx: Scope) -> Element {
         app.write().typer.drain();
     };
 
+    // let switch_layout = move |_| {
+
+    // };
+
     let toggle_info = move |_| {
         let mut app = app.write();
         let panel = &mut app.panel;
