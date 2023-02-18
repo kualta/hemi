@@ -75,7 +75,9 @@ impl AppState {
 }
 
 fn main() {
+    #[cfg(debug_assertions)]
     wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
+
     dioxus_web::launch(App);
 }
 
@@ -96,7 +98,15 @@ fn App(cx: Scope) -> Element {
 
     if let Some(data) = layouts.value() {
         if !init {
+            let app = app.write_silent();
             *layouts_state.write_silent() = data.clone();
+
+            *dictionary.write_silent() = match app.layout {
+                KeyboardLayout::Qwerty => data.qwerty.clone(),
+                KeyboardLayout::Colemak => data.colemak.clone(),
+                _ => data.qwerty.clone(),
+            };
+            
             init.set(true);
         }
     }
