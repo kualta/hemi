@@ -1119,7 +1119,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('hemi-f5bf485ec9a7ff05_bg.wasm', import.meta.url);
+        input = new URL('hemi-83efa91d9cc3fa4_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
