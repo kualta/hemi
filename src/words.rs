@@ -1,7 +1,7 @@
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, str::FromStr, vec::Vec};
+use std::{alloc::Layout, collections::HashMap, str::FromStr, vec::Vec};
 use web_sys::HtmlAudioElement;
 
 /// Stores pressed state of keys
@@ -144,13 +144,20 @@ impl Default for LayoutDictionary {
     }
 }
 
-impl LayoutDictionary {
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub(crate) struct Layouts {
+    pub(crate) qwerty: LayoutDictionary,
+    pub(crate) colemak: LayoutDictionary,
+}
+
+impl Layouts {
     pub async fn pull() -> Self {
-        let url = "https://raw.githubusercontent.com/kualta/Hemi/master/assets/qwerty.json";
+        let url = "https://raw.githubusercontent.com/kualta/Hemi/master/assets/words.json";
+
         let data = reqwest::get(url)
             .await
             .unwrap()
-            .json::<LayoutDictionary>()
+            .json::<Layouts>()
             .await
             .unwrap();
 

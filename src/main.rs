@@ -88,18 +88,16 @@ fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, LayoutDictionary::default);
     let dict = use_shared_state::<LayoutDictionary>(cx)?;
 
-    let word_data = use_future(
-        cx,
-        (),
-        |_| async move { words::LayoutDictionary::pull().await },
-    );
-
-    if let Some(data) = word_data.value() {
-        *dict.write_silent() = data.clone();
-    }
-
     use_shared_state_provider(cx, || AppState::new(&dict.read().left));
     let app = use_shared_state::<AppState>(cx)?;
+
+    use_shared_state_provider(cx, || Layouts::default());
+    let layouts_state = use_shared_state::<Layouts>(cx)?;
+    let layouts = use_future(cx, (), |_| async { Layouts::pull().await });
+
+    if let Some(data) = layouts.value() {
+        *layouts_state.write_silent() = data.clone();
+    }
 
     let on_key_down = move |event: Event<KeyboardData>| {
         let key_code = event.code();
@@ -195,6 +193,7 @@ fn Footer(cx: Scope) -> Element {
 fn Header(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
     let dictionary = use_shared_state::<LayoutDictionary>(cx)?;
+    let layouts = use_shared_state::<Layouts>(cx)?;
 
     let flip_side = move |_| {
         let mut app = app.write();
@@ -215,15 +214,22 @@ fn Header(cx: Scope) -> Element {
     let switch_layout = move |e: Event<FormData>| {
         let mut app = app.write();
         let mut dictionary = dictionary.write();
-        let layout = &mut app.layout;
+        let layouts = layouts.read();
+        let current_layout = &mut app.layout;
 
-        *layout = match e.value.as_str() {
+        *current_layout = match e.value.as_str() {
             "colemak" => KeyboardLayout::Colemak,
             "workman" => KeyboardLayout::Workman,
             "qwerty" => KeyboardLayout::Qwerty,
             "dvorak" => KeyboardLayout::Dvorak,
             "custom" => KeyboardLayout::Custom,
             _ => KeyboardLayout::Qwerty,
+        };
+
+        *dictionary = match current_layout {
+            KeyboardLayout::Qwerty => layouts.qwerty.clone(),
+            KeyboardLayout::Colemak => layouts.colemak.clone(),
+            _ => layouts.qwerty.clone(),
         };
 
         app.typer.drain();

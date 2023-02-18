@@ -1071,16 +1071,16 @@ imports.wbg.__wbindgen_memory = function() {
     const ret = wasm.memory;
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper664 = function(arg0, arg1, arg2) {
-    const ret = makeMutClosure(arg0, arg1, 318, __wbg_adapter_26);
+imports.wbg.__wbindgen_closure_wrapper674 = function(arg0, arg1, arg2) {
+    const ret = makeMutClosure(arg0, arg1, 324, __wbg_adapter_26);
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper666 = function(arg0, arg1, arg2) {
-    const ret = makeMutClosure(arg0, arg1, 318, __wbg_adapter_29);
+imports.wbg.__wbindgen_closure_wrapper676 = function(arg0, arg1, arg2) {
+    const ret = makeMutClosure(arg0, arg1, 324, __wbg_adapter_29);
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper1074 = function(arg0, arg1, arg2) {
-    const ret = makeMutClosure(arg0, arg1, 472, __wbg_adapter_32);
+imports.wbg.__wbindgen_closure_wrapper1084 = function(arg0, arg1, arg2) {
+    const ret = makeMutClosure(arg0, arg1, 478, __wbg_adapter_32);
     return addHeapObject(ret);
 };
 imports['./snippets/dioxus-interpreter-js-dab579f08da5298b/inline0.js'] = __wbg_star0;
@@ -1119,7 +1119,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('hemi-50d6fb64a97258_bg.wasm', import.meta.url);
+        input = new URL('hemi-f5bf485ec9a7ff05_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
