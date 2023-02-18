@@ -1,7 +1,8 @@
 use dioxus::html::input_data::keyboard_types::{Code, Key};
+use log::info;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
-use std::{alloc::Layout, collections::HashMap, str::FromStr, vec::Vec};
+use std::{collections::HashMap, str::FromStr, vec::Vec};
 use web_sys::HtmlAudioElement;
 
 /// Stores pressed state of keys
@@ -40,6 +41,7 @@ impl KeyboardState {
             .keys()
             .split_whitespace()
             .map(|row| {
+                info!("{:?}", row);
                 row.chars()
                     .map(|key| KeyState {
                         key: Key::from_str(&key.to_string()).expect("Non-existent key supplied"),

@@ -4,10 +4,8 @@ mod words;
 
 use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
-use dioxus::html::option;
 use dioxus::prelude::*;
 use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
-use log::info;
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -94,18 +92,13 @@ fn App(cx: Scope) -> Element {
     use_shared_state_provider(cx, || Layouts::default());
     let layouts_state = use_shared_state::<Layouts>(cx)?;
     let layouts = use_future(cx, (), |_| async { Layouts::pull().await });
+    let init = use_state(cx, || false);
 
     if let Some(data) = layouts.value() {
-        let mut app = app.write_silent();
-        *layouts_state.write_silent() = data.clone();
-
-        *dictionary.write_silent() = match app.layout {
-            KeyboardLayout::Qwerty => data.qwerty.clone(),
-            KeyboardLayout::Colemak => data.colemak.clone(),
-            _ => data.qwerty.clone(),
-        };
-
-        app.refresh_keyboard(&dictionary.read());
+        if !init {
+            *layouts_state.write_silent() = data.clone();
+            init.set(true);
+        }
     }
 
     let on_key_down = move |event: Event<KeyboardData>| {
@@ -434,7 +427,7 @@ fn StatusBar(cx: Scope) -> Element {
 
 fn Keyboard(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
-    let keyboard_state = &app.read().keyboard;
+    let keyboard = &app.read().keyboard;
 
     let button_active = "w-16 h-14 text-gray-400 border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
@@ -445,7 +438,8 @@ fn Keyboard(cx: Scope) -> Element {
     focus:ring-gray-700 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
     text-white border-gray-600";
 
-    let keyboard = rsx! { keyboard_state.keys().iter().enumerate().map(|(i, row)| {
+    let keyboard = rsx! {
+        keyboard.keys().iter().enumerate().map(|(i, row)| {
             let row_indent = (i * 10).to_string();
             rsx! {
                 span { class: "ml-{row_indent}" }
