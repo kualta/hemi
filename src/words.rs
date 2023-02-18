@@ -66,10 +66,6 @@ impl KeyboardState {
     pub(crate) fn keys(&self) -> &Vec<Vec<KeyState>> {
         self.keys.as_ref()
     }
-
-    pub(crate) fn refresh(&mut self) {
-        todo!()
-    }
 }
 
 /// Stores dictionaries of words and keys they consist of.

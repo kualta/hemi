@@ -7,6 +7,7 @@ use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::html::option;
 use dioxus::prelude::*;
 use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
+use log::info;
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -48,6 +49,17 @@ pub(crate) struct AppState {
 }
 
 impl AppState {
+    pub(crate) fn refresh_keyboard(&mut self, dictionary: &LayoutDictionary) {
+        match self.side {
+            TypingSide::Left => {
+                self.keyboard = KeyboardState::new(&dictionary.left);
+            }
+            TypingSide::Right => {
+                self.keyboard = KeyboardState::new(&dictionary.right);
+            }
+        };
+    }
+
     pub(crate) fn new(dict: &WordDictionary) -> Self {
         AppState {
             keyboard: KeyboardState::new(dict),
@@ -182,26 +194,29 @@ fn Footer(cx: Scope) -> Element {
 
 fn Header(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
-    let dict = use_shared_state::<LayoutDictionary>(cx)?;
+    let dictionary = use_shared_state::<LayoutDictionary>(cx)?;
 
     let flip_side = move |_| {
-        let side = app.read().side;
-        match side {
+        let mut app = app.write();
+
+        match app.side {
             TypingSide::Left => {
-                app.write().side = TypingSide::Right;
-                app.write().keyboard = KeyboardState::new(&dict.read().right);
+                app.side = TypingSide::Right;
             }
             TypingSide::Right => {
-                app.write().side = TypingSide::Left;
-                app.write().keyboard = KeyboardState::new(&dict.read().left);
+                app.side = TypingSide::Left;
             }
         };
-        app.write().typer.drain();
+
+        app.typer.drain();
+        app.refresh_keyboard(&dictionary.read());
     };
 
     let switch_layout = move |e: Event<FormData>| {
         let mut app = app.write();
+        let mut dictionary = dictionary.write();
         let layout = &mut app.layout;
+
         *layout = match e.value.as_str() {
             "colemak" => KeyboardLayout::Colemak,
             "workman" => KeyboardLayout::Workman,
@@ -210,13 +225,15 @@ fn Header(cx: Scope) -> Element {
             "custom" => KeyboardLayout::Custom,
             _ => KeyboardLayout::Qwerty,
         };
+
         app.typer.drain();
-        app.keyboard.refresh()
+        app.refresh_keyboard(&dictionary);
     };
 
     let toggle_info = move |_| {
         let mut app = app.write();
         let panel = &mut app.panel;
+
         *panel = match panel {
             MainPanel::Typing => MainPanel::Info,
             MainPanel::Info => MainPanel::Typing,
@@ -404,12 +421,12 @@ fn Keyboard(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
     let keyboard_state = &app.read().keyboard;
 
-    let button_active = "w-16 h-14 text-gray-400 bg-white border-2 border-gray-300 
+    let button_active = "w-16 h-14 text-gray-400 border-2 border-gray-300 
     focus:outline-none focus:ring-4 focus:ring-gray-200 
     font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
     text-white border-gray-600";
 
-    let button_inactive = "w-16 h-14 text-gray-400 bg-white focus:outline-none focus:ring-4 
+    let button_inactive = "w-16 h-14 text-gray-400 focus:outline-none focus:ring-4 
     focus:ring-gray-700 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
     text-white border-gray-600";
 
