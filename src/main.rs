@@ -86,9 +86,9 @@ fn App(cx: Scope) -> Element {
     let audio = use_shared_state::<AudioLibrary>(cx)?;
 
     use_shared_state_provider(cx, LayoutDictionary::default);
-    let dict = use_shared_state::<LayoutDictionary>(cx)?;
+    let dictionary = use_shared_state::<LayoutDictionary>(cx)?;
 
-    use_shared_state_provider(cx, || AppState::new(&dict.read().left));
+    use_shared_state_provider(cx, || AppState::new(&dictionary.read().left));
     let app = use_shared_state::<AppState>(cx)?;
 
     use_shared_state_provider(cx, || Layouts::default());
@@ -96,7 +96,16 @@ fn App(cx: Scope) -> Element {
     let layouts = use_future(cx, (), |_| async { Layouts::pull().await });
 
     if let Some(data) = layouts.value() {
+        let mut app = app.write_silent();
         *layouts_state.write_silent() = data.clone();
+
+        *dictionary.write_silent() = match app.layout {
+            KeyboardLayout::Qwerty => data.qwerty.clone(),
+            KeyboardLayout::Colemak => data.colemak.clone(),
+            _ => data.qwerty.clone(),
+        };
+
+        app.refresh_keyboard(&dictionary.read());
     }
 
     let on_key_down = move |event: Event<KeyboardData>| {
@@ -116,7 +125,7 @@ fn App(cx: Scope) -> Element {
         }
 
         if app.write().typer.buffer().is_empty() {
-            let app_dict = dict.read();
+            let app_dict = dictionary.read();
             let mut app = app.write();
             let dictionary = match app.side {
                 TypingSide::Left => &app_dict.left,

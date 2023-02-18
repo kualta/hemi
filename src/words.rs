@@ -74,7 +74,7 @@ impl KeyboardState {
 /// `keys` is expected to be a whitespace-separated uppercase sequence of key rows
 #[derive(Clone, Serialize, Deserialize)]
 pub(crate) struct WordDictionary {
-    buffer: Vec<String>,
+    words: Vec<String>,
     keys: String,
 }
 
@@ -133,12 +133,12 @@ impl Default for LayoutDictionary {
     fn default() -> Self {
         LayoutDictionary {
             left: WordDictionary {
-                buffer: vec![],
-                keys: "".to_owned(),
+                words: vec![],
+                keys: "QWERT ASDFG ZXCVB".to_owned(),
             },
             right: WordDictionary {
-                buffer: vec![],
-                keys: "".to_owned(),
+                words: vec![],
+                keys: "YUIOP HJKL; NM,./".to_owned(),
             },
         }
     }
@@ -171,7 +171,7 @@ pub(crate) struct TypingData {
     input: String,
     streak: i32,
     last_word: String,
-    words_buffer: Vec<String>,
+    words: Vec<String>,
 }
 
 impl TypingData {
@@ -184,14 +184,14 @@ impl TypingData {
 
     pub(crate) fn submit(&mut self) {
         self.last_word = self.input.clone();
-        if !self.words_buffer.is_empty() {
-            if self.input().trim() == self.words_buffer.get(0).unwrap() {
+        if !self.words.is_empty() {
+            if self.input().trim() == self.words.get(0).unwrap() {
                 self.streak += 1;
             } else {
                 self.streak = 0;
             }
 
-            self.words_buffer.remove(0);
+            self.words.remove(0);
         }
 
         self.input.clear();
@@ -202,7 +202,7 @@ impl TypingData {
     }
 
     pub(crate) fn next_word(&self) -> Option<&str> {
-        match self.words_buffer.get(0) {
+        match self.words.get(0) {
             Some(word) => Some(word.as_str()),
             None => None,
         }
@@ -221,11 +221,11 @@ impl TypingData {
     }
 
     pub(crate) fn buffer(&self) -> &Vec<String> {
-        self.words_buffer.as_ref()
+        self.words.as_ref()
     }
 
     pub(crate) fn drain(&mut self) {
-        self.words_buffer.drain(..);
+        self.words.drain(..);
     }
 
     pub(crate) fn streak(&self) -> i32 {
@@ -235,8 +235,8 @@ impl TypingData {
     pub(crate) fn generate_words(&mut self, amount: usize, dictionary: &WordDictionary) {
         let mut rng = rand::thread_rng();
 
-        self.words_buffer = dictionary
-            .buffer
+        self.words = dictionary
+            .words
             .choose_multiple(&mut rng, amount)
             .map(|str| str.to_string())
             .collect::<Vec<String>>();
