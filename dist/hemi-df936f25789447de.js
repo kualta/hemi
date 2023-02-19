@@ -1071,15 +1071,15 @@ imports.wbg.__wbindgen_memory = function() {
     const ret = wasm.memory;
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper684 = function(arg0, arg1, arg2) {
-    const ret = makeMutClosure(arg0, arg1, 330, __wbg_adapter_26);
+imports.wbg.__wbindgen_closure_wrapper694 = function(arg0, arg1, arg2) {
+    const ret = makeMutClosure(arg0, arg1, 339, __wbg_adapter_26);
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper686 = function(arg0, arg1, arg2) {
-    const ret = makeMutClosure(arg0, arg1, 330, __wbg_adapter_29);
+imports.wbg.__wbindgen_closure_wrapper696 = function(arg0, arg1, arg2) {
+    const ret = makeMutClosure(arg0, arg1, 339, __wbg_adapter_29);
     return addHeapObject(ret);
 };
-imports.wbg.__wbindgen_closure_wrapper1111 = function(arg0, arg1, arg2) {
+imports.wbg.__wbindgen_closure_wrapper1104 = function(arg0, arg1, arg2) {
     const ret = makeMutClosure(arg0, arg1, 493, __wbg_adapter_32);
     return addHeapObject(ret);
 };
@@ -1119,7 +1119,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('hemi-354843ca2d803bf0_bg.wasm', import.meta.url);
+        input = new URL('hemi-df936f25789447de_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 

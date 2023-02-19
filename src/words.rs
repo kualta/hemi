@@ -133,11 +133,11 @@ impl Default for LayoutDictionary {
     fn default() -> Self {
         LayoutDictionary {
             left: WordDictionary {
-                words: vec![],
+                words: vec!["<space>".to_owned()],
                 keys: "QWERT ASDFG ZXCVB".to_owned(),
             },
             right: WordDictionary {
-                words: vec![],
+                words: vec!["<space>".to_owned()],
                 keys: "YUIOP HJKL; NM,./".to_owned(),
             },
         }

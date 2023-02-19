@@ -6,6 +6,7 @@ use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::prelude::*;
 use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
+use log::info;
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -48,6 +49,7 @@ pub(crate) struct AppState {
 
 impl AppState {
     pub(crate) fn refresh_keyboard(&mut self, dictionary: &LayoutDictionary) {
+        info!("bro");
         match self.side {
             TypingSide::Left => {
                 self.keyboard = KeyboardState::new(&dictionary.left);
@@ -93,12 +95,13 @@ fn App(cx: Scope) -> Element {
 
     use_shared_state_provider(cx, || Layouts::default());
     let layouts_state = use_shared_state::<Layouts>(cx)?;
-    let layouts = use_future(cx, (), |_| async { Layouts::pull().await });
+
+    let layouts = use_future(cx, (), |_| async move { Layouts::pull().await });
     let init = use_state(cx, || false);
 
     if let Some(data) = layouts.value() {
         if !init {
-            let app = app.write_silent();
+            let mut app = app.write_silent();
             *layouts_state.write_silent() = data.clone();
 
             *dictionary.write_silent() = match app.layout {
@@ -106,7 +109,11 @@ fn App(cx: Scope) -> Element {
                 KeyboardLayout::Colemak => data.colemak.clone(),
                 _ => data.qwerty.clone(),
             };
-            
+
+            info!("submit");
+            app.refresh_keyboard(&dictionary.read());
+            app.typer.submit();
+
             init.set(true);
         }
     }
@@ -203,9 +210,11 @@ fn Footer(cx: Scope) -> Element {
 }
 
 fn Header(cx: Scope) -> Element {
+    info!("header");
     let app = use_shared_state::<AppState>(cx)?;
     let dictionary = use_shared_state::<LayoutDictionary>(cx)?;
     let layouts = use_shared_state::<Layouts>(cx)?;
+    info!("meow");
 
     let flip_side = move |_| {
         let mut app = app.write();
@@ -224,6 +233,7 @@ fn Header(cx: Scope) -> Element {
     };
 
     let switch_layout = move |e: Event<FormData>| {
+        info!("switch");
         let mut app = app.write();
         let mut dictionary = dictionary.write();
         let layouts = layouts.read();
@@ -249,13 +259,12 @@ fn Header(cx: Scope) -> Element {
     };
 
     let toggle_info = move |_| {
-        let mut app = app.write();
-        let panel = &mut app.panel;
+        let panel = &mut app.write().panel;
 
         *panel = match panel {
             MainPanel::Typing => MainPanel::Info,
             MainPanel::Info => MainPanel::Typing,
-        }
+        };
     };
 
     let toggle_sound = move |_| {
@@ -268,8 +277,10 @@ fn Header(cx: Scope) -> Element {
         *keyboard = !*keyboard;
     };
 
+    info!("two");
     let sound_enabled = app.read().settings.sound_enabled;
     let keyboard_enabled = app.read().settings.keyboard_enabled;
+    info!("three");
 
     cx.render(rsx!(
         div {
@@ -287,7 +298,7 @@ fn Header(cx: Scope) -> Element {
             div { " " }
             div {
                 class: "flex flex-row",
-                ToggleButton { onclick: toggle_info, icon: "info" }
+                rsx! { ToggleButton { onclick: toggle_info, icon: "info" } }
                 if keyboard_enabled {
                     rsx! { ToggleButton { onclick: toggle_keyboard, icon: "keyboard" } }
                 } else {
@@ -298,13 +309,15 @@ fn Header(cx: Scope) -> Element {
                 } else {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: "volume_off" } }
                 }
-                ToggleButton { onclick: flip_side, icon: "loop" }
-                select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 pb-1.5 items-center justify-center",
-                    name: "layout",
-                    id: "layout",
-                    onchange: switch_layout,
-                    option { value: "qwerty", "qwerty" }
-                    option { value: "colemak", "colemak" }
+                rsx! { ToggleButton { onclick: flip_side, icon: "loop" } }
+                rsx! { 
+                    select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 pb-1.5 items-center justify-center",
+                        name: "layout",
+                        id: "layout",
+                        onchange: switch_layout,
+                        option { value: "qwerty", "qwerty" }
+                        option { value: "colemak", "colemak" }
+                    }
                 }
             }
         }
@@ -376,7 +389,7 @@ fn InfoWindow(cx: Scope) -> Element {
         div {
             class: "flex flex-col justify-center items-center content-center gap-5 p-10 my-auto",
             div {
-                class: "w-1/2 text-center",
+                class: "w-96 m-auto text-center",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
                 p { class: "text-left",
                     "Hemi is an experimental typing trainer that allows to train the
@@ -386,7 +399,7 @@ fn InfoWindow(cx: Scope) -> Element {
             }
 
             div {
-                class: "w-1/2 text-center mt-5",
+                class: "w-96 m-auto text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
                 p { class: "text-left",
                     "I've found that training raw typing speed this way yields
@@ -396,7 +409,7 @@ fn InfoWindow(cx: Scope) -> Element {
             }
 
             div {
-                class: "w-1/2 text-center mt-5",
+                class: "w-96 m-auto text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "next" }
                 p { class: "text-left",
                     "After you're done training here, I recommend you
