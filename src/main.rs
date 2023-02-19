@@ -6,7 +6,6 @@ use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::prelude::*;
 use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
-use log::info;
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -49,7 +48,6 @@ pub(crate) struct AppState {
 
 impl AppState {
     pub(crate) fn refresh_keyboard(&mut self, dictionary: &LayoutDictionary) {
-        info!("bro");
         match self.side {
             TypingSide::Left => {
                 self.keyboard = KeyboardState::new(&dictionary.left);
@@ -110,7 +108,6 @@ fn App(cx: Scope) -> Element {
                 _ => data.qwerty.clone(),
             };
 
-            info!("submit");
             app.refresh_keyboard(&dictionary.read());
             app.typer.submit();
 
@@ -210,11 +207,9 @@ fn Footer(cx: Scope) -> Element {
 }
 
 fn Header(cx: Scope) -> Element {
-    info!("header");
     let app = use_shared_state::<AppState>(cx)?;
     let dictionary = use_shared_state::<LayoutDictionary>(cx)?;
     let layouts = use_shared_state::<Layouts>(cx)?;
-    info!("meow");
 
     let flip_side = move |_| {
         let mut app = app.write();
@@ -233,7 +228,6 @@ fn Header(cx: Scope) -> Element {
     };
 
     let switch_layout = move |e: Event<FormData>| {
-        info!("switch");
         let mut app = app.write();
         let mut dictionary = dictionary.write();
         let layouts = layouts.read();
@@ -277,10 +271,8 @@ fn Header(cx: Scope) -> Element {
         *keyboard = !*keyboard;
     };
 
-    info!("two");
     let sound_enabled = app.read().settings.sound_enabled;
     let keyboard_enabled = app.read().settings.keyboard_enabled;
-    info!("three");
 
     cx.render(rsx!(
         div {
