@@ -192,10 +192,9 @@ fn Footer(cx: Scope) -> Element {
         div {
             class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
             div {
-                class: "flex flex-row gap-5 underline",
-                a { href: "https://github.com/kualta/Hemi", "source"}
-                a { href: "mailto:contact@kualta.dev", "contact"}
-                a { href: "https://twitter.com/realkualta", "twitter"}
+                class: "flex flex-row gap-3",
+                a { class:"underline",  href: "https://kualta.dev", "kualta"}
+                a { class:"underline" ,href: "https://github.com/kualta/Hemi", "source"}
             }
             div { " " }
             div {
