@@ -427,9 +427,9 @@ fn Keyboard(cx: Scope) -> Element {
 
     let keyboard = rsx! {
         keyboard.keys().iter().enumerate().map(|(i, row)| {
-            let row_indent = (i * 10).to_string();
+            let row_indents = ["ml-10", "ml-20", "ml-[7.5rem]"];
             rsx! {
-                span { class: "ml-{row_indent}" }
+                span { class: row_indents[i] }
                 span {
                     row.iter().map(|key| {
                         let button_style = if key.enabled() { button_active } else { button_inactive };

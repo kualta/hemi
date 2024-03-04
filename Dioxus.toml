@@ -1,16 +1,17 @@
 [application]
-
 name = "hemi"
-default_platform = "web"
 out_dir = "dist"
 asset_dir = "assets"
+default_platform = "web"
 
 [web.app]
 title = "HemiTyper"
+base_path = "."
+
 
 [web.watcher]
 reload_html = true
-watch_path = ["src", "assets"]
+watch_path = ["src", "assets", "./"]
 
 [web.resource]
 style = [
@@ -18,7 +19,6 @@ style = [
   "./tailwind.css"
 ]
 script = []
-custom = ["./CNAME"]
 
 [web.resource.dev]
 style = []
@@ -26,3 +26,6 @@ script = []
 
 [[web.proxy]]
 backend = "http://localhost:8000/api/"
+
+# [application.tools]
+# tailwindcss = { config = "assets/tailwind.config.js" }
