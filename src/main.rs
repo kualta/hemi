@@ -2,10 +2,10 @@
 
 mod words;
 
+use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
 use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::prelude::*;
-use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
 use words::*;
 
 #[derive(Clone, Copy)]
@@ -161,8 +161,8 @@ fn App(cx: Scope) -> Element {
     };
 
     let panel = match app.read().panel {
-        MainPanel::Typing => rsx! { TypingWindow { } },
-        MainPanel::Info => rsx! { InfoWindow { } },
+        MainPanel::Typing => rsx! { TypingWindow {} },
+        MainPanel::Info => rsx! { InfoWindow {} },
     };
 
     cx.render(rsx! {
@@ -173,14 +173,14 @@ fn App(cx: Scope) -> Element {
             onkeypress: on_key_press,
             onkeyup: on_key_up,
 
-            MaterialIconStylesheet { }
-            div { class: "md:basis-1/4"}
+            MaterialIconStylesheet {}
+            div { class: "md:basis-1/4" }
             div { class: "basis-1/2 h-screen flex flex-col mx-auto",
-                Header { }
-                panel
-                Footer { }
+                Header {}
+                panel,
+                Footer {}
             }
-            div { class: "md:basis-1/4"}
+            div { class: "md:basis-1/4" }
         }
     })
 }
@@ -189,16 +189,13 @@ fn Footer(cx: Scope) -> Element {
     let version = "v".to_owned() + env!("CARGO_PKG_VERSION");
 
     cx.render(rsx!(
-        div {
-            class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
-            div {
-                class: "flex flex-row gap-3",
-                a { class:"underline",  href: "https://kualta.dev", "kualta"}
-                a { class:"underline" ,href: "https://github.com/kualta/Hemi", "source"}
+        div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
+            div { class: "flex flex-row gap-3",
+                a { class: "underline", href: "https://kualta.dev", "kualta" }
+                a { class: "underline", href: "https://github.com/kualta/Hemi", "source" }
             }
             div { " " }
-            div {
-                class: "flex flex-row gap-5",
+            div { class: "flex flex-row gap-5",
                 p { version }
             }
         }
@@ -274,33 +271,31 @@ fn Header(cx: Scope) -> Element {
     let keyboard_enabled = app.read().settings.keyboard_enabled;
 
     cx.render(rsx!(
-        div {
-            class: "flex flex-row justify-between items-center m-5",
+        div { class: "flex flex-row justify-between items-center m-5",
             div {
-                a {
-                    href: "#",
-                    h1 {
-                        class: "text-3xl md:text-4xl font-semibold tracking-tight leading-none text-gray-100",
-                        mark { class: "px-2 mx-1 text-gray-100 bg-gray-700 rounded dark:bg-gray-700", "Hemi" }
+                a { href: "#",
+                    h1 { class: "text-3xl md:text-4xl font-semibold tracking-tight leading-none text-gray-100",
+                        mark { class: "px-2 mx-1 text-gray-100 bg-gray-700 rounded dark:bg-gray-700",
+                            "Hemi"
+                        }
                         "Typer"
                     }
                 }
             }
             div { " " }
-            div {
-                class: "flex flex-row",
-                rsx! { ToggleButton { onclick: toggle_info, icon: "info" } }
+            div { class: "flex flex-row",
+                rsx! { ToggleButton { onclick: toggle_info, icon: "info" } },
                 if keyboard_enabled {
                     rsx! { ToggleButton { onclick: toggle_keyboard, icon: "keyboard" } }
                 } else {
-                    rsx! { ToggleButton { onclick: toggle_keyboard, icon: "keyboard_hide" } }
+                    rsx! { ToggleButton { onclick: toggle_keyboard, icon: "keyboard_off" } }
                 }
                 if sound_enabled {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: "volume_up" } }
                 } else {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: "volume_off" } }
                 }
-                rsx! { ToggleButton { onclick: flip_side, icon: "loop" } }
+                rsx! { ToggleButton { onclick: flip_side, icon: "loop" } },
                 rsx! { 
                     select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 pb-1.5 items-center justify-center",
                         name: "layout",
@@ -315,19 +310,14 @@ fn Header(cx: Scope) -> Element {
     ))
 }
 
-#[inline_props]
+#[component]
 fn ToggleButton<'a>(cx: Scope, onclick: EventHandler<'a, MouseEvent>, icon: &'a str) -> Element {
     cx.render(rsx! {
-        a {
-            class: "mt-3 ml-5",
-            href: "#",
-            onclick: move |evt| { onclick.call(evt); },
-            MaterialIcon {
-                color: "white",
-                name: icon,
-                size: 24,
-            }
-        },
+        a { class: "mt-3 ml-5", href: "#", onclick: move |evt| {
+                onclick.call(evt);
+            },
+            MaterialIcon { color: "white", name: icon, size: 24 }
+        }
     })
 }
 
@@ -348,39 +338,33 @@ fn TypingWindow(cx: Scope) -> Element {
 
     let typing_panel = rsx! {
         div { class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
-            h2 { class: "{side_text_style} text-right",  "{prev}" }
+            h2 { class: "{side_text_style} text-right", "{prev}" }
             h1 { class: "{main_text_style} text-center", "{current}" }
-            h2 { class: "{side_text_style} text-left",   "{next}" }
+            h2 { class: "{side_text_style} text-left", "{next}" }
         }
     };
 
     let status_bar = if status_enabled {
-        rsx! { StatusBar { } }
+        rsx! { StatusBar {} }
     } else {
-        rsx! { div { } }
+        rsx! { div {} }
     };
 
     let keyboard = if keyboard_enabled {
-        rsx! { Keyboard { } }
+        rsx! { Keyboard {} }
     } else {
-        rsx! { div { } }
+        rsx! { div {} }
     };
 
     cx.render(rsx! {
-        div { class: "flex flex-col place-items-stretch h-screen gap-5 p-10",
-            status_bar
-            typing_panel
-            keyboard
-        }
+        div { class: "flex flex-col place-items-stretch h-screen gap-5 p-10", status_bar, typing_panel, keyboard }
     })
 }
 
 fn InfoWindow(cx: Scope) -> Element {
     cx.render(rsx!(
-        div {
-            class: "flex flex-col justify-center items-center content-center gap-5 p-10 my-auto",
-            div {
-                class: "w-96 m-auto text-center",
+        div { class: "flex flex-col justify-center items-center content-center gap-5 p-10 my-auto",
+            div { class: "w-96 m-auto text-center",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
                 p { class: "text-left",
                     "Hemi is an experimental typing trainer that allows to train the
@@ -389,37 +373,28 @@ fn InfoWindow(cx: Scope) -> Element {
                 }
             }
 
-            div {
-                class: "w-96 m-auto text-center mt-5",
+            div { class: "w-96 m-auto text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
                 p { class: "text-left",
                     "I've found that training raw typing speed this way yields
                     great results for me, but there weren't many typing tutors that 
-                    allow this kind of training - so I made one." 
+                    allow this kind of training - so I made one."
                 }
             }
 
-            div {
-                class: "w-96 m-auto text-center mt-5",
+            div { class: "w-96 m-auto text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "next" }
                 p { class: "text-left",
                     "After you're done training here, I recommend you
                     to continue with a full-featured typing trainer like "
-                    span {
-                        class: "underline",
-                        a { class: "", href: "https://monkeytype.com/", "monkeytype"}
-                    }
+                    span { class: "underline", a { class: "", href: "https://monkeytype.com/", "monkeytype" } }
                     ", which this tool was heavily inspired by."
                 }
             }
 
-            div {
-                class: "mt-20 text-center",
-                "made with ❤ by ",
-                span {
-                    class: "underline",
-                    a { class: "", href: "https://kualta.dev/", "kualta"}
-                }
+            div { class: "mt-20 text-center",
+                "made with ❤ by "
+                span { class: "underline", a { class: "", href: "https://kualta.dev/", "kualta" } }
             }
         }
     ))
@@ -432,9 +407,7 @@ fn StatusBar(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
-            div { class: "flex flex-row gap-5",
-                p { "streak: {streak}" }
-            }
+            div { class: "flex flex-row gap-5", p { "streak: {streak}" } }
         }
     })
 }
@@ -472,7 +445,8 @@ fn Keyboard(cx: Scope) -> Element {
                 br { }
             }
         }
-    )};
+        )
+    };
 
     cx.render(rsx! {
         div {
