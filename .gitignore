@@ -2,4 +2,6 @@
 /.idea
 /target
 /dist
+/node_modules
+
 Cargo.lock

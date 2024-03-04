@@ -14,14 +14,14 @@ watch_path = ["src", "assets"]
 
 [web.resource]
 style = [
-  "./style.css"
+  "./style.css",
+  "./tailwind.css"
 ]
 script = []
+custom = ["./CNAME"]
 
 [web.resource.dev]
-style = [
-  "./style.css"
-]
+style = []
 script = []
 
 [[web.proxy]]
