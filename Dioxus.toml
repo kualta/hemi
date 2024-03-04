@@ -1,0 +1,28 @@
+[application]
+
+name = "hemi"
+default_platform = "web"
+out_dir = "dist"
+asset_dir = "assets"
+
+[web.app]
+title = "HemiTyper"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "assets"]
+
+[web.resource]
+style = [
+  "./style.css"
+]
+script = []
+
+[web.resource.dev]
+style = [
+  "./style.css"
+]
+script = []
+
+[[web.proxy]]
+backend = "http://localhost:8000/api/"

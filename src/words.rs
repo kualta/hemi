@@ -92,7 +92,7 @@ pub(crate) struct AudioLibrary {
 
 impl Default for AudioLibrary {
     fn default() -> Self {
-        let path = "assets/tealios/";
+        let path = "tealios/";
         let extra: Vec<String> = vec![
             "Space".to_owned(),
             "Enter".to_owned(),
