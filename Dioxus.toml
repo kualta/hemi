@@ -5,8 +5,8 @@ asset_dir = "assets"
 default_platform = "web"
 
 [web.app]
+base_path = ""
 title = "HemiTyper"
-base_path = "."
 
 
 [web.watcher]

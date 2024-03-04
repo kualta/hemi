@@ -191,7 +191,6 @@ fn Footer(cx: Scope) -> Element {
     cx.render(rsx!(
         div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
             div { class: "flex flex-row gap-3",
-                a { class: "underline", href: "https://kualta.dev", "kualta" }
                 a { class: "underline", href: "https://github.com/kualta/Hemi", "source" }
             }
             div { " " }
