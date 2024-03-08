@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Dioxus Deploy"
-        uses: kualta/depl@0.1.5
+        uses: kualta/depl@0.1.6

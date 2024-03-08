@@ -167,7 +167,7 @@ fn App(cx: Scope) -> Element {
 
     cx.render(rsx! {
         div {
-            class: "h-screen flex bg-gray-900 roboto-mono text-gray-300",
+            class: "h-screen flex bg-black roboto-mono text-white",
             tabindex: "-1",
             onkeydown: on_key_down,
             onkeypress: on_key_press,
@@ -273,8 +273,8 @@ fn Header(cx: Scope) -> Element {
         div { class: "flex flex-row justify-between items-center m-5",
             div {
                 a { href: "#",
-                    h1 { class: "text-3xl md:text-4xl font-semibold tracking-tight leading-none text-gray-100",
-                        mark { class: "px-2 mx-1 text-gray-100 bg-gray-700 rounded dark:bg-gray-700",
+                    h1 { class: "text-3xl md:text-4xl font-semibold tracking-tight leading-none text-white",
+                        mark { class: "px-2 mx-1 text-white bg-[#27272a] rounded dark:bg-[#27272a]",
                             "Hemi"
                         }
                         "Typer"
@@ -331,9 +331,8 @@ fn TypingWindow(cx: Scope) -> Element {
     let current = app.typer.input();
 
     let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
-                                bg-gradient-to-br from-teal-50 to-teal-200 basis-1/4";
-    let main_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
-                                bg-gradient-to-br from-sky-300 to-sky-200 basis-1/4";
+                                bg-gradient-to-br from-zinc-50 to-zinc-200 basis-1/4";
+    let main_text_style = "pb-5 text-4xl font-bold text-white basis-1/4";
 
     let typing_panel = rsx! {
         div { class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
@@ -415,14 +414,14 @@ fn Keyboard(cx: Scope) -> Element {
     let app = use_shared_state::<AppState>(cx)?;
     let keyboard = &app.read().keyboard;
 
-    let button_active = "w-16 h-14 text-gray-400 border-2 border-gray-300 
-    focus:outline-none focus:ring-4 focus:ring-gray-200 
-    font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
-    text-white border-gray-600";
+    let button_active = "w-16 h-14 text-white border-2 border-zinc-300 
+    focus:outline-none focus:ring-4 focus:ring-zinc-200 
+    font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-[#27272a]
+    text-white border-zinc-600";
 
-    let button_inactive = "w-16 h-14 text-gray-400 focus:outline-none focus:ring-4 
-    focus:ring-gray-700 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-gray-800 
-    text-white border-gray-600";
+    let button_inactive = "w-16 h-14 text-zinc-400 focus:outline-none focus:ring-4 
+    focus:ring-zinc-700 font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-[#27272a] 
+    text-white border-zinc-600";
 
     let keyboard = rsx! {
         keyboard.keys().iter().enumerate().map(|(i, row)| {
