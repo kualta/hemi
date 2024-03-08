@@ -6,7 +6,7 @@ authors = ["kualta <contact@kualta.dev>"]
 
 [dependencies]
 dioxus = { version = "0.4.3", features = ["html"] }
-dioxus-material-icons = "1.2.0"
+dioxus-material-icons = { git = "https://github.com/kualta/diom.git"}
 dioxus-web = "0.4.3"
 getrandom = { version = "0.2.7", features = ["js"] }
 log = "0.4.17"
