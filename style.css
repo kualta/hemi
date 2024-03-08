@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 .roboto-mono {
     font-family: 'Roboto Mono', monospace;
 }
