@@ -5,9 +5,7 @@ asset_dir = "assets"
 default_platform = "web"
 
 [web.app]
-base_path = "hemi.kualta.dev"
 title = "HemiTyper"
-
 
 [web.watcher]
 reload_html = true
