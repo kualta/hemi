@@ -186,12 +186,24 @@ fn App(cx: Scope) -> Element {
 }
 
 fn Footer(cx: Scope) -> Element {
+    let app = use_shared_state::<AppState>(cx)?;
     let version = "v".to_owned() + env!("CARGO_PKG_VERSION");
+
+    let toggle_info = move |_| {
+        let panel = &mut app.write().panel;
+
+        *panel = match panel {
+            MainPanel::Typing => MainPanel::Info,
+            MainPanel::Info => MainPanel::Typing,
+        };
+    };
 
     cx.render(rsx!(
         div { class: "flex flex-row justify-between items-center m-5 text-sm text-neutral-400",
             div { class: "flex flex-row gap-3",
                 a { class: "underline", href: "https://github.com/kualta/Hemi", "source" }
+                button { class: "underline", onclick: toggle_info, "about" }
+                // rsx! { ToggleButton { onclick: toggle_info, icon: "about" } },
             }
             div { " " }
             div { class: "flex flex-row gap-5",
@@ -247,14 +259,6 @@ fn Header(cx: Scope) -> Element {
         app.refresh_keyboard(&dictionary);
     };
 
-    let toggle_info = move |_| {
-        let panel = &mut app.write().panel;
-
-        *panel = match panel {
-            MainPanel::Typing => MainPanel::Info,
-            MainPanel::Info => MainPanel::Typing,
-        };
-    };
 
     let toggle_sound = move |_| {
         let sound = &mut app.write().settings.sound_enabled;
@@ -283,7 +287,6 @@ fn Header(cx: Scope) -> Element {
             }
             div { " " }
             div { class: "flex flex-row",
-                rsx! { ToggleButton { onclick: toggle_info, icon: "info" } },
                 if keyboard_enabled {
                     rsx! { ToggleButton { onclick: toggle_keyboard, icon: "keyboard" } }
                 } else {
@@ -294,9 +297,9 @@ fn Header(cx: Scope) -> Element {
                 } else {
                     rsx! { ToggleButton { onclick: toggle_sound, icon: "volume_off" } }
                 }
-                rsx! { ToggleButton { onclick: flip_side, icon: "loop" } },
+                rsx! { ToggleButton { onclick: flip_side, icon: "cached" } },
                 rsx! { 
-                    select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 pb-1.5 items-center justify-center",
+                    select { class: "mt-2 ml-5 bg-transparent dark:bg-transparent border border-white text-sm rounded-lg appearance-none text-center p-1 px-1.5 pb-1.5 items-center justify-center",
                         name: "layout",
                         id: "layout",
                         onchange: switch_layout,
