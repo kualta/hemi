@@ -2,7 +2,7 @@
 
 mod words;
 
-use dioxus_material_icons::{MaterialIcon, MaterialIconStylesheet};
+use dioxus_material_symbols::{MaterialIcon, MaterialIconStylesheet};
 use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::prelude::*;
