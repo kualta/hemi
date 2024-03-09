@@ -1,4 +1,6 @@
-An experimental typing tutor written in pure Rust with [Dioxus](https://github.com/dioxuslabs/dioxus) on the frontend.
+HemiTyper is a typing trainer that provides you with only half the keyboard per session, to help you improve coordination of each hand separately.
+
+Written in pure Rust using [Dioxus](https://github.com/dioxuslabs/dioxus)
 
 Available at <b> [hemi.kualta.dev](https://hemi.kualta.dev/) </b> 
 

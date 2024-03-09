@@ -203,7 +203,6 @@ fn Footer(cx: Scope) -> Element {
             div { class: "flex flex-row gap-3",
                 a { class: "underline", href: "https://github.com/kualta/Hemi", "source" }
                 button { class: "underline", onclick: toggle_info, "about" }
-                // rsx! { ToggleButton { onclick: toggle_info, icon: "about" } },
             }
             div { " " }
             div { class: "flex flex-row gap-5",
@@ -368,18 +367,17 @@ fn InfoWindow(cx: Scope) -> Element {
             div { class: "w-96 m-auto text-center",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "what" }
                 p { class: "text-left",
-                    "Hemi is an experimental typing trainer that allows to train the
-                    typing speed of your hands separately, providing you with only half 
-                    the keyboard per training session."
+                    "Hemi is a typing trainer that allows you to improve typing speed of your hands 
+                    separately, providing you with only half the keyboard per training session."
                 }
             }
 
             div { class: "w-96 m-auto text-center mt-5",
                 h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
                 p { class: "text-left",
-                    "I've found that training raw typing speed this way yields
-                    great results for me, but there weren't many typing tutors that 
-                    allow this kind of training - so I made one."
+                    "I found that training raw typing speed this way yields
+                    great results, but there wasn't any typing tutors that focused 
+                    on this kind of training"
                 }
             }
 
