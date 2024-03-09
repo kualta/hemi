@@ -530,7 +530,7 @@ imports.wbg.__wbg_setAttributeInner_605314ec1c8cafdf = function() { return logEr
     var v1 = getCachedStringFromWasm0(arg4, arg5);
     setAttributeInner(takeObject(arg0), v0, takeObject(arg3), v1);
 }, arguments) };
-imports.wbg.__wbg_fetch_27eb4c0a08a9ca04 = function() { return logError(function (arg0) {
+imports.wbg.__wbg_fetch_9490421f75e0b282 = function() { return logError(function (arg0) {
     const ret = fetch(getObject(arg0));
     return addHeapObject(ret);
 }, arguments) };
@@ -1381,7 +1381,7 @@ imports.wbg.__wbindgen_closure_wrapper713 = function() { return logError(functio
     const ret = makeMutClosure(arg0, arg1, 322, __wbg_adapter_54);
     return addHeapObject(ret);
 }, arguments) };
-imports.wbg.__wbindgen_closure_wrapper994 = function() { return logError(function (arg0, arg1, arg2) {
+imports.wbg.__wbindgen_closure_wrapper995 = function() { return logError(function (arg0, arg1, arg2) {
     const ret = makeMutClosure(arg0, arg1, 429, __wbg_adapter_57);
     return addHeapObject(ret);
 }, arguments) };
