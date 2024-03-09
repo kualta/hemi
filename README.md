@@ -1,14 +1,32 @@
 HemiTyper is a typing trainer that provides you with only half the keyboard per session, to help you improve coordination of each hand separately.
 
-Written in pure Rust using [Dioxus](https://github.com/dioxuslabs/dioxus)
-
-Available at <b> [hemi.kualta.dev](https://hemi.kualta.dev/) </b> 
+Written in pure Rust using [Dioxus](https://github.com/dioxuslabs/dioxus). 
 
 Supported layouts:
  - Qwerty
  - Colemak
+   
+Available at <b> [hemi.kualta.dev](https://hemi.kualta.dev/) </b> 
 
-<img src="https://user-images.githubusercontent.com/72769566/216391187-3e45efae-3185-4997-851c-e86367c200d2.png" width="600" align="center">
+<img src="https://github.com/kualta/hemi/assets/72769566/f554af58-2386-4243-9f07-cac3c82fd014" width="600" align="center">
+
+### Building
+use [Dioxus CLI](https://github.com/DioxusLabs/dioxus/tree/master/packages/cli) to build and serve locally:
+```sh
+cargo install dioxus-cli
+```
+to build run
+```sh
+dx build
+```
+to serve on localhost run
+```sh
+dx serve --hot-reload
+```
+to compile tailwind classes run
+```sh
+npx tailwindcss -i ./assets/style.css -o ./assets/tailwind.css
+```
 
 ### Contributing 
 The tool is considered complete, but PRs are still welcome.
