@@ -9,5 +9,6 @@ jobs:
   build-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: "Dioxus Deploy"
-        uses: kualta/depl@0.1.7
+      - name: Dioxus Deploy
+        uses: DioxusLabs/deploy-action@0.1.1
+            
