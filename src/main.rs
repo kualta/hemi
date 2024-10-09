@@ -95,7 +95,6 @@ fn App() -> Element {
     let layouts = use_resource(|| async move { Layouts::pull().await });
     let mut init = use_signal(|| false);
 
-    // 初期表示メソッド
     if let Some(ref data) = *layouts.read() {
         if !*init.read() {
             let mut app = app.write();
