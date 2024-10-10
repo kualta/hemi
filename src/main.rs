@@ -388,8 +388,8 @@ fn InfoWindow() -> Element {
 
             div { class: "mt-20 text-center",
                 "made with ❤ by "
-                span { class: "underline", a { class: "", href: "https://kualta.dev/", "kualta" } 
-                " and community"}
+                span { class: "underline", a { class: "", href: "https://kualta.dev/", "kualta" } }
+                " and community"
             }
         }
     )
