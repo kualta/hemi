@@ -213,10 +213,12 @@ fn Header() -> Element {
     let flip_side = move |_| {
         let mut app = app.write();
 
-        match app.side {
+        let newSide = match app.side {
             TypingSide::Left => TypingSide::Right,
             TypingSide::Right => TypingSide::Left,
         };
+
+        app.side = newSide;
         app.typer.drain();
         app.refresh_keyboard(&dictionary.read());
     };
