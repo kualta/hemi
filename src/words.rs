@@ -175,8 +175,6 @@ pub(crate) struct TypingData {
 }
 
 impl TypingData {
-
-
     /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut data = TypingData::default();

@@ -216,6 +216,7 @@ fn Header() -> Element {
 
     let flip_side = move |_| {
         let mut app = app.write();
+        let mut dictionary = dictionary.write();
 
         let newSide = match app.side {
             TypingSide::Left => TypingSide::Right,
@@ -224,7 +225,12 @@ fn Header() -> Element {
 
         app.side = newSide;
         app.typer.drain();
-        app.refresh_keyboard(&dictionary.read());
+        app.refresh_keyboard(&dictionary);
+        
+        match app.side {
+            TypingSide::Left => app.typer.generate_words(10, &dictionary.left),
+            TypingSide::Right => app.typer.generate_words(10, &dictionary.right),
+        }
     };
 
     let switch_layout = move |e: Event<FormData>| {
@@ -250,6 +256,11 @@ fn Header() -> Element {
 
         app.typer.drain();
         app.refresh_keyboard(&dictionary);
+
+        match app.side {
+            TypingSide::Left => app.typer.generate_words(10, &dictionary.left),
+            TypingSide::Right => app.typer.generate_words(10, &dictionary.right),
+        }
     };
 
     let toggle_sound = move |_| {
