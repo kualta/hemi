@@ -14,8 +14,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install wasm-bindgen-cli
+        run: cargo install -f wasm-bindgen-cli --version 0.2.92
+
       - name: Install Dioxus CLI
         run: cargo install dioxus-cli
+
+      - name: Update project dependencies
+        run: |
+          cargo update -p wasm-bindgen --precise 0.2.92
+          cargo clean
 
       - name: Build project
         run: dx build --release
