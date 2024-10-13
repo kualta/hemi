@@ -1,4 +1,4 @@
-name: github pages
+name: GitHub Pages
 
 on:
   push:
@@ -9,5 +9,19 @@ jobs:
   build-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Dioxus Deploy
-        uses: DioxusLabs/deploy-action@4f933485ec8f37a9dc1beec181f4eba58789523e
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Dioxus CLI
+        run: cargo install dioxus-cli
+
+      - name: Build project
+        run: dx build --release
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
