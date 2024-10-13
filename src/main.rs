@@ -94,7 +94,6 @@ fn App() -> Element {
 
     let layouts = use_resource(|| async move { Layouts::pull().await });
     let mut init = use_signal(|| false);
-
     if let Some(ref data) = *layouts.read() {
         if !*init.read() {
             let mut app = app.write();
@@ -107,7 +106,12 @@ fn App() -> Element {
             };
 
             app.refresh_keyboard(&dictionary.read());
-            app.typer.submit();
+
+            let current_dict = match app.side {
+                TypingSide::Left => &dictionary.read().left,
+                TypingSide::Right => &dictionary.read().right,
+            };
+            app.typer = TypingData::new(10, current_dict);
 
             init.set(true);
         }
@@ -126,7 +130,7 @@ fn App() -> Element {
             _ => (),
         }
 
-        if app.write().typer.buffer().is_empty() {
+        if app.write().typer.buffer().len() <= 3 {
             let app_dict = dictionary.read();
             let mut app = app.write();
             let dictionary = match app.side {
@@ -329,7 +333,7 @@ fn TypingWindow() -> Element {
     let prev = app.typer.last_word();
     let current = app.typer.input();
 
-    let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text 
+    let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text
                                 bg-gradient-to-br from-zinc-50 to-zinc-200 basis-1/4";
     let main_text_style = "pb-5 text-4xl font-bold text-white basis-1/4";
 
@@ -373,7 +377,7 @@ fn InfoWindow() -> Element {
                 h1 { class: "text-xl tracking-tight text-white font-bold", "why" }
                 p { class: "text-left",
                     "I found that training raw typing speed this way yields
-                    great results, but there wasn't any typing tutors that focused 
+                    great results, but there wasn't any typing tutors that focused
                     on this kind of training"
                 }
             }
@@ -412,7 +416,7 @@ fn Keyboard() -> Element {
     let app = use_context::<Signal<AppState>>();
     let keyboard = &app.read().keyboard;
 
-    let button_active = "w-16 h-14 text-white border-2 border-zinc-300 
+    let button_active = "w-16 h-14 text-white border-2 border-zinc-300
     focus:outline-none focus:ring-4 focus:ring-zinc-200
      font-medium rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 bg-[#27272a]
       text-white border-zinc-600";

@@ -152,7 +152,7 @@ pub(crate) struct Layouts {
 
 impl Layouts {
     pub async fn pull() -> Self {
-        let url = "https://raw.githubusercontent.com/kualta/Hemi/master/assets/words.json";
+        let url = "https://raw.githubusercontent.com/kualta/hemi/master/assets/words.json";
 
         let data = reqwest::get(url)
             .await
@@ -175,6 +175,8 @@ pub(crate) struct TypingData {
 }
 
 impl TypingData {
+
+
     /// Copies `amount` of elements from provided `dictionary` and constructs [WordBuffer] from them
     pub(crate) fn new(amount: usize, dictionary: &WordDictionary) -> Self {
         let mut data = TypingData::default();
