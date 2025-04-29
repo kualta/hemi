@@ -6,7 +6,6 @@ default_platform = "web"
 
 [web.app]
 title = "HemiTyper"
-base_path = "hemi"
 
 [web.watcher]
 reload_html = true
