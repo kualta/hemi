@@ -20,6 +20,9 @@ jobs:
       - name: Build project
         run: dx build --release --platform web
 
+      - name: Move CNAME file
+        run: mv ./target/dx/hemi/release/web/public/assets/CNAME ./target/dx/hemi/release/web/public/CNAME || echo "CNAME file not found"
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
