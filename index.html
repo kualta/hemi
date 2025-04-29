@@ -13,8 +13,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap');
     </style>
 
-    <link href="./tailwind.css" rel="stylesheet">
-<link rel="preload" as="script" href="/./assets/hemi-71fdcf3bd93d2b5b.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/./assets/hemi_bg-c64783df48a821bc.wasm" crossorigin></head>
+    <link href="./assets/tailwind.css" rel="stylesheet">
+<link rel="preload" as="script" href="/./assets/hemi-71fdcf3bd93d2b5b.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/./assets/hemi_bg-74a9f5290b81e97d.wasm" crossorigin></head>
 
 <body>
     <div id="main"> </div>
@@ -22,7 +22,7 @@
             // We can't use a module script here because we need to start the script immediately when streaming
             import("/./assets/hemi-71fdcf3bd93d2b5b.js").then(
                 ({ default: init }) => {
-                init("/./assets/hemi_bg-c64783df48a821bc.wasm").then((wasm) => {
+                init("/./assets/hemi_bg-74a9f5290b81e97d.wasm").then((wasm) => {
                     if (wasm.__wbindgen_start == undefined) {
                     wasm.main();
                     }
