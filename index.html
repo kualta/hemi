@@ -14,7 +14,7 @@
     </style>
 
     <link href="./assets/tailwind.css" rel="stylesheet">
-<link rel="preload" as="script" href="/hemi/assets/hemi-71fdcf3bd93d2b5b.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/hemi/assets/hemi_bg-3a685aaaccb2ac8c.wasm" crossorigin></head>
+<link rel="preload" as="script" href="/hemi/assets/hemi-71fdcf3bd93d2b5b.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/hemi/assets/hemi_bg-ddfe40db71e73f69.wasm" crossorigin></head>
 
 <body>
     <div id="main"> </div>
@@ -22,7 +22,7 @@
             // We can't use a module script here because we need to start the script immediately when streaming
             import("/hemi/assets/hemi-71fdcf3bd93d2b5b.js").then(
                 ({ default: init }) => {
-                init("/hemi/assets/hemi_bg-3a685aaaccb2ac8c.wasm").then((wasm) => {
+                init("/hemi/assets/hemi_bg-ddfe40db71e73f69.wasm").then((wasm) => {
                     if (wasm.__wbindgen_start == undefined) {
                     wasm.main();
                     }
