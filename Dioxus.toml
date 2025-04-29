@@ -12,10 +12,6 @@ reload_html = true
 watch_path = ["src", "assets", "./"]
 
 [web.resource]
-style = [
-  "./style.css",
-  "./tailwind.css"
-]
 script = []
 
 [web.resource.dev]
@@ -25,5 +21,5 @@ script = []
 [[web.proxy]]
 backend = "http://localhost:8000/api/"
 
-# [application.tools]
-# tailwindcss = { config = "assets/tailwind.config.js" }
+[application.tools]
+tailwindcss = { config = "assets/tailwind.config.js" }
