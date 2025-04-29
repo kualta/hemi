@@ -2,6 +2,7 @@
 
 mod words;
 
+use dioxus::document::Stylesheet;
 use dioxus::events::{KeyboardData, MouseEvent};
 use dioxus::html::input_data::keyboard_types::{Code, Key};
 use dioxus::prelude::*;
@@ -93,8 +94,8 @@ fn App() -> Element {
     let mut layouts_state = use_context::<Signal<Layouts>>();
 
     let mut layouts = use_resource(|| async move { Layouts::pull().await });
-    
-    use_effect(move|| {
+
+    use_effect(move || {
         if let Some(ref data) = *layouts.read() {
             let mut app = app.write();
             *layouts_state.write() = data.clone();
@@ -114,7 +115,7 @@ fn App() -> Element {
             app.typer = TypingData::new(10, current_dict);
         }
     });
-    
+
     let on_key_down = move |event: Event<KeyboardData>| {
         let key_code = event.code();
 
@@ -164,18 +165,25 @@ fn App() -> Element {
 
     rsx! {
         div {
+
+
+        Stylesheet { href: asset!("./assets/style.css") }
+        Stylesheet { href: asset!("./assets/tailwind.css") }
+
+        div {
             class: "h-screen flex bg-black roboto-mono text-white",
             tabindex: "-1",
             onkeydown: on_key_down,
             onkeypress: on_key_press,
             onkeyup: on_key_up,
-            div { class: "md:basis-1/4" },
-            div { class: "basis-1/2 h-screen flex flex-col mx-auto",
+            div { class: "h-screen w-screen overflow-hidden p-0 sm:p-4 flex flex-col mx-auto",
                 Header {},
                 {panel},
                 Footer {}
             },
-            div { class: "md:basis-1/4" }
+        }
+
+
         }
     }
 }
@@ -224,7 +232,7 @@ fn Header() -> Element {
         app.side = newSide;
         app.typer.drain();
         app.refresh_keyboard(&dictionary);
-        
+
         match app.side {
             TypingSide::Left => app.typer.generate_words(10, &dictionary.left),
             TypingSide::Right => app.typer.generate_words(10, &dictionary.right),
@@ -343,8 +351,8 @@ fn TypingWindow() -> Element {
     let current = app.typer.input();
 
     let side_text_style = "pb-5 text-4xl font-bold text-transparent bg-clip-text
-                                bg-gradient-to-br from-zinc-50 to-zinc-200 basis-1/4";
-    let main_text_style = "pb-5 text-4xl font-bold text-white basis-1/4";
+                                bg-gradient-to-br from-zinc-50 to-zinc-200 basis-1/4 text-center";
+    let main_text_style = "pb-5 text-4xl font-bold text-white basis-1/4 text-left";
 
     let typing_panel = rsx! {
         div { class: "flex flex-row justify-center items-center content-center gap-5 p-10 my-auto h-32",
