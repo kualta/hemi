@@ -1,11 +1,11 @@
 [package]
 name = "hemi"
-version = "5.6.0"
+version = "6.3.0"
 edition = "2021"
 authors = ["kualta <contact@kualta.dev>"]
 
 [dependencies]
-dioxus = { version = "0.5.6", features = ["web", "html"] }
+dioxus = { version = "0.6.3", features = ["web", "html"] }
 dioxus-material-symbols = "0.4.3"
 getrandom = { version = "0.2.7", features = ["js"] }
 log = "0.4.17"
@@ -15,8 +15,8 @@ serde = "1.0.152"
 serde_json = "1.0.81"
 tailwindcss-to-rust-macros = "0.1.2"
 wasm-logger = "0.2.0"
-wasm-bindgen = "=0.2.95"
-wasm-bindgen-cli = "=0.2.95"
+wasm-bindgen = "=0.2.100"
+wasm-bindgen-cli = "=0.2.100"
 web-sys = { version = "0.3.60", features = ["HtmlAudioElement"] }
 
 [profile.dev]
@@ -25,6 +25,16 @@ opt-level = 1
 [profile.release]
 opt-level = 2
 lto = true
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
 
 [profile.dev.package."*"]
 opt-level = 3

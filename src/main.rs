@@ -92,10 +92,10 @@ fn App() -> Element {
     use_context_provider(|| Signal::new(Layouts::default()));
     let mut layouts_state = use_context::<Signal<Layouts>>();
 
-    let layouts = use_resource(|| async move { Layouts::pull().await });
-    let mut init = use_signal(|| false);
-    if let Some(ref data) = *layouts.read() {
-        if !*init.read() {
+    let mut layouts = use_resource(|| async move { Layouts::pull().await });
+    
+    use_effect(move|| {
+        if let Some(ref data) = *layouts.read() {
             let mut app = app.write();
             *layouts_state.write() = data.clone();
 
@@ -112,11 +112,9 @@ fn App() -> Element {
                 TypingSide::Right => &dictionary.read().right,
             };
             app.typer = TypingData::new(10, current_dict);
-
-            init.set(true);
         }
-    }
-
+    });
+    
     let on_key_down = move |event: Event<KeyboardData>| {
         let key_code = event.code();
 
