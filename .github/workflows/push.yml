@@ -18,7 +18,7 @@ jobs:
         run: cargo install --force dioxus-cli
 
       - name: Build project
-        run: dx build --release
+        run: dx build --release --platform web
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
