@@ -93,7 +93,7 @@ fn App() -> Element {
     use_context_provider(|| Signal::new(Layouts::default()));
     let mut layouts_state = use_context::<Signal<Layouts>>();
 
-    let mut layouts = use_resource(|| async move { Layouts::pull().await });
+    let layouts = use_resource(|| async move { Layouts::pull().await });
 
     use_effect(move || {
         if let Some(ref data) = *layouts.read() {
@@ -222,7 +222,7 @@ fn Header() -> Element {
 
     let flip_side = move |_| {
         let mut app = app.write();
-        let mut dictionary = dictionary.write();
+        let dictionary = dictionary.read();
 
         let newSide = match app.side {
             TypingSide::Left => TypingSide::Right,

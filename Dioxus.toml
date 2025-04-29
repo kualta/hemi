@@ -1,6 +1,6 @@
 [application]
 name = "hemi"
-out_dir = "dist"
+out_dir = "target/dx/hemi/release/web/public"
 asset_dir = "assets"
 default_platform = "web"
 
