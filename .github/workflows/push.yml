@@ -15,13 +15,20 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Dioxus CLI
-        run: cargo install --force dioxus-cli
+        run: cargo install --force dioxus-cli@0.6.3
 
       - name: Build project
         run: dx build --release --platform web
 
-      - name: Move CNAME file
-        run: mv ./target/dx/hemi/release/web/public/assets/CNAME ./target/dx/hemi/release/web/public/CNAME || echo "CNAME file not found"
+      - name: Debug - List build output
+        run: |
+          echo "=== Build output structure ==="
+          ls -la ./target/dx/hemi/release/web/public/
+          echo "=== Assets folder ==="
+          ls -la ./target/dx/hemi/release/web/public/assets/ || echo "No assets folder"
+
+      - name: Copy CNAME file to root
+        run: cp ./assets/CNAME ./target/dx/hemi/release/web/public/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
