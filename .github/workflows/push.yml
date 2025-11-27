@@ -15,7 +15,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Dioxus CLI
-        run: cargo install --force dioxus-cli@0.6.3
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+          cargo binstall dioxus-cli@0.6.3 --no-confirm
 
       - name: Build project
         run: dx build --release --platform web
